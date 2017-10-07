@@ -55,16 +55,13 @@ def handle_data(context, data):
     current_data = data.current(context.fit, field=['close', 'price'])
     log.debug(current_data)
 
+    """    
     order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
     order = get_order(order_id)
     log.info("order=%s" % order)
     """
-    order_id = order_value(sec2, 1, order_type=OrderType(stop_price=6.40), time_in_force='gtc')
-    log.info("order_id=%s" % order_id)
-    
-    order = get_order(order_id)
-    log.info("order=%s" % order)
-    
+
+    """
     open_orders = get_open_orders(sec2)
     log.info("FIT open_orders=%s" % open_orders)
     
