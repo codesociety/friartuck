@@ -1,0 +1,1 @@
+python friar_tuck_run.py --algo_script my_algo --config_file my_rh_config.cfg

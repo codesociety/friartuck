@@ -1,5 +1,9 @@
 import argparse
+import datetime
 import sys
+
+import time
+
 from friartuck.api import FriarTuckLive, Order
 import logging
 from os import path
@@ -110,5 +114,9 @@ if __name__ == "__main__":
     trading_algo.get_datetime = get_datetime
 
     friar_tuck.set_active_algo(trading_algo)
-    friar_tuck.run_engine(block=True)
+    friar_tuck.run_engine(block=False)
+
+    while 1:
+        # log.info("Alive and well: %s" % datetime.datetime.now())
+        time.sleep(60)
     """End Shell Setup"""
