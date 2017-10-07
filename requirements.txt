@@ -1,0 +1,6 @@
+schedule==0.4.3
+pandas==0.20.3
+pytz==2017.2
+numpy==1.13.1
+six==1.11.0
+requests==2.18.4
