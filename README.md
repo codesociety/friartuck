@@ -6,6 +6,6 @@ More documentation will come while I continue to test live
 * set robinhood credentials in the rh_config.cfg file
 * make changes to the my_algo.py file.
 
-*****Run****
+To Run:
 python friar_tuck_run.py --algo_script my_algo --config_file rh_config.cfg
 
