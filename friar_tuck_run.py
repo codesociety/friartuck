@@ -1,13 +1,12 @@
-import argparse
-import datetime
-import sys
-
 import time
+import argparse
+import sys
 
 from friartuck.api import FriarTuckLive, Order
 import logging
 from os import path
 import configparser
+
 
 parser = argparse.ArgumentParser(description='FriarTuck Quant Robinhood Broker Application')
 

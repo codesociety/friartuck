@@ -420,7 +420,6 @@ class FriarTuckLive:
 
         # update context status
         self.context.is_market_open = self.is_market_open
-        self.active_algo.handle_data(self.context, self.friar_data)
         if (not self._initialized or not market_open_temp) and self.is_market_open:
             # if market was not open and is now open... initialize algo
             try:
