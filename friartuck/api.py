@@ -423,15 +423,23 @@ class FriarTuckLive:
         if (not self._initialized or not market_open_temp) and self.is_market_open:
             # if market was not open and is now open... initialize algo
             try:
-                if hasattr(self.active_algo, 'before_trading_start'):
-                    self.active_algo.before_trading_start(self.context, self.friar_data)
+                if hasattr(self.active_algo, 'on_market_open'):
+                    self.active_algo.on_market_open(self.context, self.friar_data)
 
                     # self.active_algo.handle_data(self.context, self.friar_data)
             except Exception as inst:
                 log.error("Error occurred while invoking initialize: %s " % inst)
                 traceback.print_exc()
 
-        minutes_after_open_time = self.market_opens_at + timedelta(minutes=1)  # Adding one more call
+        if self._data_frequency == "1d":
+            # with this frequency, it's a market closed last update whenever this method is call
+            self._market_closed_lastupdate = True
+        elif self._data_frequency == "1h":
+            minutes_after_open_time = self.market_opens_at + timedelta(hours=1)
+            minutes_after_open_time = minutes_after_open_time.replace(minute=0, second=0, microsecond=0)
+        else:
+            minutes_after_open_time = self.market_opens_at + timedelta(minutes=1)  # Adding one more call
+
         if market_open_temp and not self.is_market_open:
             # If market used to be open and at this update is now closed, we want to call handle_data one more time
             self._market_closed_lastupdate = True  # we want the algo to be called one more time.

@@ -32,8 +32,8 @@ def initialize(context):
         log.info("symbol(%s) pos(%s) " % (sec.symbol, context.portfolio.positions[sec]))
 
 
-def before_trading_start(context, data):
-    log.info("before trading starts")
+def on_market_open(context, data):
+    log.info("on market open")
     pass
 
 
