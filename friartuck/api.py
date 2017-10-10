@@ -1,22 +1,18 @@
 import schedule
 import time
 import datetime
-import calendar
 import traceback
 
-import pandas as pd
 import numpy as np
 import logging
 
-from abc import ABCMeta, abstractmethod, abstractproperty
-from time import strftime
 from datetime import datetime, timedelta
 from friartuck.broker import RHBroker
 from friartuck.Robinhood import Robinhood
 from friartuck.quote_source import GoogleQuoteSource
 from friartuck import utc_to_local
 from collections import Iterable
-from asyncio.tasks import sleep
+from threading import Thread
 
 log = logging.getLogger("friar_tuck")
 
@@ -176,6 +172,7 @@ class FriarTuckLive:
 
     def __init__(self, user_name, password, data_frequency="1h", log_file=None):
         if not self._initialized:
+            self.engine_running=False
             self._data_frequency = data_frequency
             self._active_datetime = datetime.now()
             # self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
@@ -198,19 +195,23 @@ class FriarTuckLive:
 
     # block=True means the thread will not return,
     # if false it will return and the caller will need to keep the program from exiting, thus killing the engine
-    def run_engine(self, block=True):
+    def run_engine(self):
         if not self._initialized:
             self._time_interval_processor()
             self._initialized = True
-            # self.active_algo.initialize(self.context)
+            t = Thread(target=self.run_scheduler, args=('schedule_maintainer',))
+            t.start()
 
-            if block:
-                while 1:
-                    schedule.run_pending()
-                    time.sleep(1)
-
-                    # def lookup_security(self, symbol):
-                    #   return self._fetch_and_build_security(symbol)
+    def run_scheduler(self, name):
+        self.engine_running = True
+        log.info("**** running - %s" % name)
+        while 1:
+            schedule.run_pending()
+            time.sleep(1)
+            if not self.engine_running:
+                break
+        self.engine_running = False
+        log.info("**** exiting - %s" % name)
 
     def history(self, security, bar_count=1, frequency="1d", field=None):
         symbol_map = security_to_symbol_map(security)
@@ -390,7 +391,10 @@ class FriarTuckLive:
         if not sec_detail:
             sec_details = self.rh_session.instruments(symbol)
             if sec_details and len(sec_details) > 0:
-                sec_detail = sec_details[0]
+                for result in sec_details:
+                    if result['symbol'] == symbol:
+                        sec_detail = sec_details[0]
+                        break
 
         if not sec_detail:
             return None

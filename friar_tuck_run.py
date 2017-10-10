@@ -113,7 +113,7 @@ if __name__ == "__main__":
     trading_algo.get_datetime = get_datetime
 
     friar_tuck.set_active_algo(trading_algo)
-    friar_tuck.run_engine(block=False)
+    friar_tuck.run_engine()
 
     while 1:
         # log.info("Alive and well: %s" % datetime.datetime.now())
