@@ -118,4 +118,6 @@ if __name__ == "__main__":
     while 1:
         # log.info("Alive and well: %s" % datetime.datetime.now())
         time.sleep(60)
+    friar_tuck.stop_engine()
+    time.sleep(1)
     """End Shell Setup"""

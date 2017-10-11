@@ -172,7 +172,9 @@ class FriarTuckLive:
 
     def __init__(self, user_name, password, data_frequency="1h", log_file=None):
         if not self._initialized:
+            self.run_thread=None
             self.engine_running=False
+            self.stop_engine=False
             self._data_frequency = data_frequency
             self._active_datetime = datetime.now()
             # self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
@@ -196,11 +198,20 @@ class FriarTuckLive:
     # block=True means the thread will not return,
     # if false it will return and the caller will need to keep the program from exiting, thus killing the engine
     def run_engine(self):
+        self.stop_engine = False
         if not self._initialized:
             self._time_interval_processor()
             self._initialized = True
-            t = Thread(target=self.run_scheduler, args=('schedule_maintainer',))
-            t.start()
+
+        if not self.run_thread or not self.run_thread.is_alive():
+            self.run_thread = Thread(target=self.run_scheduler, args=('schedule_maintainer',))
+            self.run_thread.setDaemon(True)
+            self.run_thread.start()
+
+    def stop_engine(self):
+        if not self.run_thread or not self.run_thread.is_alive():
+            return
+        self.stop_engine = True
 
     def run_scheduler(self, name):
         self.engine_running = True
@@ -208,7 +219,7 @@ class FriarTuckLive:
         while 1:
             schedule.run_pending()
             time.sleep(1)
-            if not self.engine_running:
+            if self.stop_engine:
                 break
         self.engine_running = False
         log.info("**** exiting - %s" % name)
