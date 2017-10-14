@@ -93,7 +93,7 @@ pip install -r requirements.txt
     current_quote = data.current(context.aapl, field=['close', 'open'])
     log.debug(current_quote)
     ...
-    # Get field(s) for more than 1 securities
+    # Get field(s) for more than 1 security
     current_quote = data.current([context.aapl, context.wtw], field='close')
     log.debug(current_quote)
     
@@ -257,7 +257,7 @@ I've been working on this project by briefly mention below their names and proje
 ## LICENSE
 [cpl]:#contribution--license 'Contribution guide & license info'
 
-Check out <a href='/LICENSE'>license</a> for more details.
+Check out <a href='/LICENSE.md'>license</a> for more details.
 
 ## PRODUCTION STATUS & SUPPORT
 [ps]: #production-status--support 'Production use disclaimer & support info'
