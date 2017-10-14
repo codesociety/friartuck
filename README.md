@@ -41,9 +41,6 @@ Drive for this project: Build an algorithm on Quantopian, was satisfied with the
         # As a broker to Robinhood
         https://github.com/Jamonek/Robinhood
         
-        # Quantopian (runs on Zipline)
-        https://www.quantopian.com/
-        
         # Google's Undocumented Finance API For quotes(ohlcv) (frequencies 1m, 1h, 1d)
         finance.google.com/finance/
         # Google informatin on delays for quotes(most are realtime)
