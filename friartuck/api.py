@@ -1,13 +1,34 @@
+"""
+MIT License
+
+Copyright (c) 2017 Code Society
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
 import schedule
 import time
-import datetime
 import traceback
 
 import numpy as np
 import logging
 
 from datetime import datetime, timedelta
-from friartuck.broker import RHBroker
 from friartuck.Robinhood import Robinhood
 from friartuck.quote_source import GoogleQuoteSource
 from friartuck import utc_to_local
@@ -97,7 +118,7 @@ class Order:
         self.amount = 0
         self.symbol = None
         self.filled = 0
-        self.Commission = 0
+        self.commission = 0
         self.rejected_reason = None
         self.time_in_force = None
 
@@ -155,7 +176,6 @@ class Account:
 
 
 class FriarTuckLive:
-    broker = None
     context = None
     active_algo = None
     _active_datetime = None
@@ -166,9 +186,10 @@ class FriarTuckLive:
     _initialized = False
     _market_closed_lastupdate = False
     _starting_cash = None
+    _start_date = datetime.now()
     _current_security_bars = {}
     _security_last_known_price = {}
-    _order_status_map = {"queued": 0, "unconfirmed": 0, "confirmed": 0, "partially_filled": 0, "filled": 1, "cancelled": 2, "rejected": 3, "failed": 3}
+    _order_status_map = {"confirmed": 0, "partially_filled": 0, "filled": 1, "cancelled": 2, "rejected": 3, "queued": 4, "unconfirmed": 4, "failed": 5}
 
     def __init__(self, user_name, password, data_frequency="1h", log_file=None):
         if not self._initialized:
@@ -183,7 +204,6 @@ class FriarTuckLive:
             self.context = FriarContext()
             self.rh_session = Robinhood();
             self.rh_session.login(username=user_name, password=password)
-            self.broker = RHBroker(self.rh_session)
             self.friar_data = FriarData(self)
 
     def set_active_algo(self, active_algo):
@@ -389,7 +409,7 @@ class FriarTuckLive:
         order.amount = int(float(result["quantity"]))
         order.symbol = symbol
         order.filled = int(float(result["cumulative_quantity"]))
-        order.Commission = float(result["fees"])
+        order.commission = float(result["fees"])
         order.rejected_reason = result["reject_reason"]
         order.time_in_force = result["time_in_force"]
 
@@ -559,6 +579,9 @@ class FriarTuckLive:
         if not self._starting_cash:
             self._starting_cash = portfolio_value
 
+        if not self._start_date:
+            self._start_date = datetime.now()
+
         returns = 0
         if self._starting_cash and self._starting_cash > 0:
             returns = (portfolio_value - self._starting_cash) / self._starting_cash
@@ -604,7 +627,7 @@ class FriarTuckLive:
             net_leverage = market_value / portfolio_value
 
         portfolio = Portfolio()
-        portfolio.capital_used = portfolio_value - market_value
+        portfolio.capital_used = (short_position_value-long_position_value)
         portfolio.cash = cash
         portfolio.pnl = pnl
         portfolio.positions = positions
@@ -612,7 +635,7 @@ class FriarTuckLive:
         portfolio.positions_value = market_value
         portfolio.returns = returns
         portfolio.starting_cash = self._starting_cash
-        portfolio.start_date = None
+        portfolio.start_date = self._start_date
 
         self.context.portfolio = portfolio
 

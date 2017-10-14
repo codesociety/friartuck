@@ -22,24 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 import logging
-import sys
-import calendar
-from datetime import datetime, timedelta
 
 log = logging.getLogger("friar_tuck")
 
-formatter = logging.Formatter('%(asctime)s:%(levelname)s - %(module)s:%(lineno)d - %(message)s')
-handler = logging.StreamHandler(stream=sys.stdout)
-handler.setFormatter(formatter)
-handler.setLevel(logging.DEBUG)
 
-log.addHandler(handler)
-log.setLevel(logging.DEBUG)
+def initialize(context):
+    # (required) is called when the process starts up
+    log.info("hello, I am in initialize...")
 
 
-def utc_to_local(utc_dt):
-    # get integer timestamp to avoid precision lost
-    timestamp = calendar.timegm(utc_dt.timetuple())
-    local_dt = datetime.fromtimestamp(timestamp)
-    assert utc_dt.resolution >= timedelta(microseconds=1)
-    return local_dt.replace(microsecond=utc_dt.microsecond)    
+def on_market_open(context, data):
+    # (optional) is called when the market opens or after a restart of the process during the live market
+    log.info("on market open")
+
+
+def handle_data(context, data):
+    # (required) is called at each data interval, currently supported frequencies (1m=every minute, 1h=every hour, 1d=every day at end of session).
+    log.info("hello, I am in handle_data")
