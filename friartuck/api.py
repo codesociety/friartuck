@@ -210,7 +210,7 @@ class FriarTuckLive:
         self._current_security_bars = {}
         self._load_all_data()
         self.active_algo = active_algo
-        self.active_algo.initialize(self.context)
+        self.active_algo.initialize(self.context, self.friar_data)
 
     def get_datetime(self):
         return self._active_datetime

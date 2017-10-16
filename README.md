@@ -12,12 +12,14 @@ Algorithm script file (**algo_template.py**) ...
 import logging
 log = logging.getLogger("friar_tuck")
     
-def initialize(context):
-    # (required) is called when the process starts up 
+def initialize(context, data):
+    # (required) is called when the process starts up
+    # Note: within this method "initialize", the parameter "data" should primarily be used to load historical data for initialization, the use of data.current(...) method is best within the handle_data(...) method.
     log.info("hello, I am in initialize...")
     
 def on_market_open(context, data):
     # (optional) is called when the market opens or after a restart of the process during the live market
+    # Note: within this method "on_market_open", the parameter "data" should primarily be used to load historical data for initialization, the use of data.current(...) method is best within the handle_data(...) method.
     log.info("on market open")
     
 def handle_data(context, data):

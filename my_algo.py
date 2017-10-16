@@ -29,7 +29,7 @@ from friartuck.api import OrderType
 log = logging.getLogger("friar_tuck")
 
 
-def initialize(context):
+def initialize(context, data):
     log.info("hello, I am in initialize...")
 
     context.assets = []
@@ -53,6 +53,9 @@ def initialize(context):
     log.info("pnl(%s)" % context.portfolio.pnl)
     for sec in context.portfolio.positions:
         log.info("symbol(%s) pos(%s) " % (sec.symbol, context.portfolio.positions[sec]))
+
+    hist_quotes = data.history([context.aapl, context.wtw], frequency='1m', bar_count=10, field='close')
+    log.debug(hist_quotes)
 
 
 def on_market_open(context, data):

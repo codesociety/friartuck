@@ -26,7 +26,7 @@ import logging
 log = logging.getLogger("friar_tuck")
 
 
-def initialize(context):
+def initialize(context, data):
     # (required) is called when the process starts up
     log.info("hello, I am in initialize...")
 
