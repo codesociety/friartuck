@@ -48,6 +48,7 @@ def initialize(context, data):
     context.aapl = lookup_security("AAPL")
     context.wtw = lookup_security("WTW")
     context.fit = lookup_security("FIT")
+    context.gevo = lookup_security("GEVO")
     log.info(context.account)
     log.info(context.portfolio)
     log.info("pnl(%s)" % context.portfolio.pnl)
@@ -56,6 +57,12 @@ def initialize(context, data):
 
     hist_quotes = data.history([context.aapl, context.wtw], frequency='1m', bar_count=10, field='close')
     log.debug(hist_quotes)
+
+    # order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
+    #order_id = order_for_robinhood(context=context, security=context.gevo, weight=1.0, order_type=OrderType(stop_price=0.50))
+    order_id = order_shares(context.gevo, -1, order_type=OrderType(stop_price=0.50), time_in_force='gtc')
+    order = get_order(order_id)
+    log.info("order=%s" % order)
 
 
 def on_market_open(context, data):
@@ -81,11 +88,9 @@ def handle_data(context, data):
     current_data = data.current(context.fit, field=['close', 'price'])
     log.debug(current_data)
 
-    """    
     order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
     order = get_order(order_id)
     log.info("order=%s" % order)
-    """
 
     """
     open_orders = get_open_orders(sec2)
