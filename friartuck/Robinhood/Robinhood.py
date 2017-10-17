@@ -733,7 +733,7 @@ class Robinhood:
             quantity=1,
             price=None,
             stop_price=None,
-            transaction=None,
+            transaction = None,
             trigger='immediate',
             order='market',
             time_in_force = 'gfd'
@@ -750,7 +750,8 @@ class Robinhood:
         Args:
             instrument (dict): the RH URL and symbol in dict for the instrument to be traded
             quantity (int): quantity of stocks in order
-            bid_price (float): price for order
+            price (float): limit price for order
+            stop_price (float): stop price for order
             transaction (:enum:`Transaction`): BUY or SELL enum
             trigger (:enum:`Trigger`): IMMEDIATE or STOP enum
             order (:enum:`Order`): MARKET or LIMIT
@@ -762,11 +763,18 @@ class Robinhood:
         """
         if isinstance(transaction, str):
             transaction = Transaction(transaction)
-        if not price:
-            if transaction == Transaction.BUY:
-                price = self.quote_data(instrument['symbol'])['bid_price']
+
+        if transaction == Transaction.BUY and not price:
+            if stop_price:
+                price = stop_price+(stop_price*0.05)  # Complying with Robinhood 5% collared
             else:
-                price = self.quote_data(instrument['symbol'])['ask_price']
+                price = self.quote_data(instrument['symbol'])['bid_price']
+
+        # if not price:
+        #    if transaction == Transaction.BUY:
+        #        price = self.quote_data(instrument['symbol'])['bid_price']
+        #    else:
+        #        price = self.quote_data(instrument['symbol'])['ask_price']
                 
         payload = {
             'account': self.get_account()['url'],
@@ -779,9 +787,9 @@ class Robinhood:
             'type': order.lower()
         }
         if price:
-            payload['price']= float(price)
+            payload['price'] = float(price)
         if stop_price:
-            payload['stop_price']= float(stop_price)
+            payload['stop_price'] = float(stop_price)
             
         # data = 'account=%s&instrument=%s&price=%f&quantity=%d&side=%s&symbol=%s#&time_in_force=gfd&trigger=immediate&type=market' % (
         #    self.get_account()['url'],
