@@ -34,7 +34,7 @@ def initialize(context, data):
 
     context.assets = []
     context.symbol_metadata = {}
-    dataset = pd.read_csv("https://dl.dropboxusercontent.com/s/cg8qzffg7yfyzk6/my_universe.csv?dl=0")
+    dataset = pd.read_csv("https://dl.dropboxusercontent.com/s/vz8cudbw6t9i04e/my_universe.csv?dl=0")
     for (index, series) in dataset.iterrows():
         asset = lookup_security(series["symbol"])
         context.symbol_metadata[asset] = series
@@ -60,10 +60,12 @@ def initialize(context, data):
 
     # order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
     #order_id = order_for_robinhood(context=context, security=context.gevo, weight=1.0, order_type=OrderType(stop_price=0.50))
-    order_id = order_shares(context.gevo, -1, order_type=OrderType(stop_price=0.50), time_in_force='gtc')
-    order = get_order(order_id)
-    log.info("order=%s" % order)
+    #order_id = order_shares(context.gevo, -1, order_type=OrderType(stop_price=0.50), time_in_force='gtc')
+    #order = get_order(order_id)
+    #log.info("order=%s" % order)
 
+    current_quote = data.current(context.aapl, field=['bid_price', 'ask_price'])
+    log.info(current_quote)
 
 def on_market_open(context, data):
     log.info("on market open")
@@ -88,9 +90,9 @@ def handle_data(context, data):
     current_data = data.current(context.fit, field=['close', 'price'])
     log.debug(current_data)
 
-    order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
-    order = get_order(order_id)
-    log.info("order=%s" % order)
+    #order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
+    #order = get_order(order_id)
+    #log.info("order=%s" % order)
 
     """
     open_orders = get_open_orders(sec2)

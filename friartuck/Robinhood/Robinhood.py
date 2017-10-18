@@ -298,7 +298,7 @@ class Robinhood:
             keys = key.split(',')
             myStr = ''
             for item in keys:
-                myStr += stock[item] + ","
+                myStr += str(stock[item]) + ","
             return (myStr.split(','))
         #Prompt for stock if not entered
         if not stock:   #pragma: no cover
@@ -766,9 +766,10 @@ class Robinhood:
 
         if transaction == Transaction.BUY and not price:
             if stop_price:
-                price = stop_price+(stop_price*0.05)  # Complying with Robinhood 5% collared
+                price = round(stop_price+(stop_price*0.05), 2)  # Complying with Robinhood 5% collared
             else:
-                price = self.quote_data(instrument['symbol'])['bid_price']
+                bid_price = self.quote_data(instrument['symbol'])['bid_price'];
+                price = round(bid_price+(bid_price*0.05), 2)
 
         # if not price:
         #    if transaction == Transaction.BUY:

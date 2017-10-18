@@ -272,11 +272,15 @@ class FriarTuckLive:
                 self._current_security_bars[security] = security_bars
 
             # print("price %s " % self._current_security_bars[security].iloc[-1]["price"])
-            if self._current_security_bars[security] is not None and (not self._current_security_bars[security].empty or self._current_security_bars[security].iloc[-1]["price"] == float["nan"]):
-                last_price_list = self.rh_session.get_quote_list(security.symbol, 'symbol,last_trade_price')
+            if self._current_security_bars[security] is not None:  # and (not self._current_security_bars[security].empty or self._current_security_bars[security].iloc[-1]["price"] == float["nan"]):
+                last_price_list = self.rh_session.get_quote_list(security.symbol, 'symbol,last_trade_price,bid_price,bid_size,ask_price,ask_size')
                 if last_price_list and len(last_price_list) > 0:
                     if security in self._current_security_bars:
                         self._current_security_bars[security]["price"] = float(last_price_list[0][1])
+                        self._current_security_bars[security]["bid_price"] = float(last_price_list[0][2])
+                        self._current_security_bars[security]["bid_size"] = float(last_price_list[0][3])
+                        self._current_security_bars[security]["ask_price"] = float(last_price_list[0][4])
+                        self._current_security_bars[security]["ask_size"] = float(last_price_list[0][5])
 
             if not field:
                 return self._current_security_bars[security].iloc[-1]
@@ -291,11 +295,15 @@ class FriarTuckLive:
                     security_bars = self.history(sec, bar_count=1, frequency=self._data_frequency, field=None)
                     self._current_security_bars[sec] = security_bars[sec]
 
-                if self._current_security_bars[sec] is not None and (not self._current_security_bars[sec].empty or self._current_security_bars[sec].iloc[-1]["price"] == float["nan"]):
-                    last_price_list = self.rh_session.get_quote_list(sec.symbol, 'symbol,last_trade_price')
+                if self._current_security_bars[sec] is not None:  # and (not self._current_security_bars[sec].empty or self._current_security_bars[sec].iloc[-1]["price"] == float["nan"]):
+                    last_price_list = self.rh_session.get_quote_list(sec.symbol, 'symbol,last_trade_price,bid_price,bid_size,ask_price,ask_size')
                     if last_price_list and len(last_price_list) > 0:
                         if sec in self._current_security_bars:
                             self._current_security_bars[sec]["price"] = float(last_price_list[0][1])
+                            self._current_security_bars[sec]["bid_price"] = float(last_price_list[0][2])
+                            self._current_security_bars[sec]["bid_size"] = float(last_price_list[0][3])
+                            self._current_security_bars[sec]["ask_price"] = float(last_price_list[0][4])
+                            self._current_security_bars[sec]["ask_size"] = float(last_price_list[0][5])
 
                 if not field:
                     return_bars[sec] = self._current_security_bars[sec].iloc[-1]
@@ -571,10 +579,11 @@ class FriarTuckLive:
         port_info = self.rh_session.portfolios()
         acct_info = self.rh_session.get_account()
 
+        unsettled_funds = float(acct_info["unsettled_funds"])
         market_value = float(port_info["market_value"])
         cash = float(acct_info["cash"])
-        portfolio_value = market_value + cash
-        unsettled_funds = float(acct_info["unsettled_funds"])
+        total_cash = cash + unsettled_funds
+        portfolio_value = market_value + total_cash
 
         if not self._starting_cash:
             self._starting_cash = portfolio_value
@@ -628,7 +637,7 @@ class FriarTuckLive:
 
         portfolio = Portfolio()
         portfolio.capital_used = (short_position_value-long_position_value)
-        portfolio.cash = cash
+        portfolio.cash = total_cash
         portfolio.pnl = pnl
         portfolio.positions = positions
         portfolio.portfolio_value = portfolio_value
@@ -641,18 +650,18 @@ class FriarTuckLive:
 
         account = Account()
         # account.accrued_interest=acct_info
-        account.available_funds = cash
+        account.available_funds = total_cash
         account.buying_power = float(acct_info["buying_power"])
-        account.cushion = cash / portfolio_value
+        account.cushion = total_cash / portfolio_value
         account.day_trades_remaining = float("inf")
         account.equity_with_loan = portfolio_value
-        account.excess_liquidity = cash
+        account.excess_liquidity = total_cash
         account.initial_margin_requirement = 0
         account.leverage = leverage
         account.maintenance_margin_requirement = 0
         account.net_leverage = net_leverage
         account.net_liquidation = portfolio_value
-        account.regt_equity = cash
+        account.regt_equity = total_cash
         account.regt_margin = float("inf")
         account.settled_cash = cash
         account.total_positions_value = market_value

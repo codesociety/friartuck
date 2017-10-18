@@ -87,7 +87,7 @@ pip install -r requirements.txt
 ```
 ***Using "data" object for current data from "handle_data(context, data)"***
 ```
-    # Get current data (all fields [open, high, low, close, volume, price])
+    # Get current data (all fields [open, high, low, close, volume, price, bid_price, bid_size, ask_price, ask_size])
     current_quote = data.current(context.aapl)
     log.debug(current_quote)
     ...
@@ -209,10 +209,10 @@ pip install -r requirements.txt
         
     Portfolio Object:
         capital_used (float): net capital at play (Total cost of shorts) minus (Total cost of longs)
-        cash (float): total cash at hand available for trading
+        cash (float): total cash at hand available for trading (robinhood unsettled cash + cash)
         pnl (float): net profit_loss (unrealized_pl + unsettled_funds)
         positions (dict): key=Security object, value=Position object
-        portfolio_value (float): total value of the portfolio (cash + market-value)
+        portfolio_value (float): total value of the portfolio (robinhood unsettled cash + cash + market-value)
         positions_value (float): market-value (Robinhood)
         returns (float): total returns since starting the FriarTuck process ((portfolio_value - starting_cash) / starting_cash)
         starting_cash (float): total available cash at the start of the FriarTuck process
@@ -225,21 +225,21 @@ pip install -r requirements.txt
         
     Account Object: These fields are from Quantopian, I attempt to map them with fields from and calcs from Robinhood
         accrued_interest (float): This will always be with Robinhood(could not find a matching field) 0
-        available_funds (float): cash available for trading
+        available_funds (float): cash available for trading (Robinhood unsettled cash + cash)
         buying_power (float): Robinhood buying power
-        cushion (float): cash / portfolio_value
+        cushion (float): (Robinhood unsettled cash + cash) / portfolio_value
         day_trades_remaining (int): Infinity (could not identify a Robinhood field to match)
         equity_with_loan (float): portfolio_value
-        excess_liquidity (float): available cash
+        excess_liquidity (float): (Robinhood unsettled cash + cash)
         initial_margin_requirement (float): 0 (could not identify a Robinhood field to match)
         leverage (float): current leverage = (long_position_value + short_position_value) / portfolio_value
         maintenance_margin_requirement (float): 0 (could not identify a Robinhood field to match)
         net_leverage (float): market_value / portfolio_value
         net_liquidation (float): portfolio_value
-        regt_equity (float): available cash
+        regt_equity (float): (Robinhood unsettled cash + cash)
         regt_margin (float): Infinity (could not identify a Robinhood field to match)
-        settled_cash (float): cash
-        total_positions_value (float): market_value
+        settled_cash (float): cash (robinhood cash)
+        total_positions_value (float): (Robinhood market_value)
         
     
 
