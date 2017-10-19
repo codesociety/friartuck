@@ -45,6 +45,7 @@ log = logging.getLogger("friar_tuck")
 PATH = path.abspath(path.dirname(__file__))
 ROOT = path.dirname(PATH)
 
+friar_tuck = None
 
 def get_config(config_filename):
     friar_config = configparser.ConfigParser(
@@ -98,11 +99,8 @@ def order_value(security, amount, order_type=None, time_in_force='gfd'):
     return friar_tuck.order_value(security, amount, order_type, time_in_force)
 
 
-if __name__ == "__main__":
-    # if len(sys.argv) <= 2:
-    #   exit("Too less arguments calling script")
-
-    args = parser.parse_args(sys.argv[1:])
+def start_engine(input_args):
+    args = parser.parse_args(input_args)
 
     global trading_algo, config
     trading_algo = __import__(args.algo_script)
@@ -137,10 +135,19 @@ if __name__ == "__main__":
 
     friar_tuck.set_active_algo(trading_algo)
     friar_tuck.run_engine()
+    """End Shell Setup"""
+
+
+if __name__ == "__main__":
+    # if len(sys.argv) <= 2:
+    #   exit("Too less arguments calling script")
+
+    start_engine(sys.argv[1:])
 
     while 1:
         # log.info("Alive and well: %s" % datetime.datetime.now())
         time.sleep(60)
     friar_tuck.stop_engine()
     time.sleep(1)
-    """End Shell Setup"""
+
+

@@ -66,6 +66,11 @@ def initialize(context, data):
 
     current_quote = data.current(context.aapl, field=['bid_price', 'ask_price'])
     log.info(current_quote)
+    bid_price = data.current(context.aapl, field='bid_price')
+    log.info("bid_price=(%s)" % bid_price)
+    ask_price = data.current(context.aapl, field='ask_price')
+    log.info("ask_price=(%s)" % ask_price)
+
 
 def on_market_open(context, data):
     log.info("on market open")
