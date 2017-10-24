@@ -49,7 +49,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
 
     def fetch_quotes(self, symbol, bar_count=1, frequency='1m', field=None):
         if frequency not in self.allowed_history_frequency:
-            log.warn("frequency used (%s) is not allowed, the allowable list includes (%s)" % (frequency, self.allowed_history_frequency))
+            log.warning("frequency used (%s) is not allowed, the allowable list includes (%s)" % (frequency, self.allowed_history_frequency))
             return [];
 
         interval = 60
@@ -147,7 +147,7 @@ def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, 
                 bars = bars.append(bar)
 
     if bars is None:
-        log.warn("Unexpected, could not retrieve quote for security (%s) " % symbol)
+        log.warning("Unexpected, could not retrieve quote for security (%s) " % symbol)
         return None
 
     bars = bars.tail(bar_count)
