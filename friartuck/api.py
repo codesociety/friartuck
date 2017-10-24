@@ -27,6 +27,7 @@ import traceback
 
 import numpy as np
 import logging
+import pandas as pd
 
 from datetime import datetime, timedelta
 from friartuck.Robinhood import Robinhood
@@ -43,6 +44,9 @@ class FriarContext:
         self.is_market_open = False
         self.account = None
         self.portfolio = None
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class Security:
@@ -193,9 +197,9 @@ class FriarTuckLive:
 
     def __init__(self, user_name, password, data_frequency="1h", log_file=None):
         if not self._initialized:
-            self.run_thread=None
-            self.engine_running=False
-            self.stop_engine=False
+            self.run_thread = None
+            self.engine_running = False
+            self.stop_engine = False
             self._data_frequency = data_frequency
             self._active_datetime = datetime.now()
             # self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
@@ -271,6 +275,17 @@ class FriarTuckLive:
                 security_bars = self.history(security, bar_count=1, frequency=self._data_frequency, field=None)
                 self._current_security_bars[security] = security_bars
 
+            if self._current_security_bars[security] is None:
+                quote_date = datetime.now()
+                quote_date = quote_date.replace(second=0, microsecond=0)
+                self._current_security_bars[security] = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
+                                                                     data={'price': float("nan"),
+                                                                           'open': float("nan"),
+                                                                           'high': float("nan"),
+                                                                           'low': float("nan"),
+                                                                           'close': float("nan"),
+                                                                           'volume': int(0)})
+
             # print("price %s " % self._current_security_bars[security].iloc[-1]["price"])
             if self._current_security_bars[security] is not None:  # and (not self._current_security_bars[security].empty or self._current_security_bars[security].iloc[-1]["price"] == float["nan"]):
                 last_price_list = self.rh_session.get_quote_list(security.symbol, 'symbol,last_trade_price,bid_price,bid_size,ask_price,ask_size')
@@ -293,6 +308,18 @@ class FriarTuckLive:
                 symbol_list_map[sec.symbol] = sec
                 if sec not in self._current_security_bars:
                     security_bars = self.history(sec, bar_count=1, frequency=self._data_frequency, field=None)
+
+                    if not security_bars or sec not in security_bars:
+                        quote_date = datetime.now()
+                        quote_date = quote_date.replace(second=0, microsecond=0)
+                        security_bars[sec] = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
+                                                          data={'price': float("nan"),
+                                                                'open': float("nan"),
+                                                                'high': float("nan"),
+                                                                'low': float("nan"),
+                                                                'close': float("nan"),
+                                                                'volume': int(0)})
+
                     self._current_security_bars[sec] = security_bars[sec]
 
                 if self._current_security_bars[sec] is not None:  # and (not self._current_security_bars[sec].empty or self._current_security_bars[sec].iloc[-1]["price"] == float["nan"]):
@@ -432,7 +459,7 @@ class FriarTuckLive:
             if sec_details and len(sec_details) > 0:
                 for result in sec_details:
                     if result['symbol'] == symbol:
-                        sec_detail = sec_details[0]
+                        sec_detail = result
                         break
 
         if not sec_detail:
@@ -441,9 +468,9 @@ class FriarTuckLive:
         # sec_detail = sec_details[0]
         symbol = sec_detail['symbol']
         is_tradeable = sec_detail['tradeable']
-        type = sec_detail['type']
+        sec_type = sec_detail['type']
 
-        sec = Security(symbol, is_tradeable, type, sec_detail)
+        sec = Security(symbol, is_tradeable, sec_type, sec_detail)
         self._fetched_securities_cache[symbol] = sec
         return sec
 
@@ -636,7 +663,7 @@ class FriarTuckLive:
             net_leverage = market_value / portfolio_value
 
         portfolio = Portfolio()
-        portfolio.capital_used = (short_position_value-long_position_value)
+        portfolio.capital_used = (short_position_value - long_position_value)
         portfolio.cash = total_cash
         portfolio.pnl = pnl
         portfolio.positions = positions
