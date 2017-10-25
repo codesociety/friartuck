@@ -21,6 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import threading
+
 import schedule
 import time
 import traceback
@@ -179,6 +181,20 @@ class Account:
         return str(self.__dict__)
 
 
+def synchronized_method(method):
+    outer_lock = threading.Lock()
+    lock_name = "__" + method.__name__ + "_lock" + "__"
+
+    def sync_method(self, *args, **kws):
+        with outer_lock:
+            if not hasattr(self, lock_name): setattr(self, lock_name, threading.Lock())
+            lock = getattr(self, lock_name)
+            with lock:
+                return method(self, *args, **kws)
+
+    return sync_method
+
+
 class FriarTuckLive:
     context = None
     active_algo = None
@@ -264,6 +280,7 @@ class FriarTuckLive:
     def can_trade(self, security):
         return security.is_tradeable
 
+    @synchronized_method
     def current(self, security, field):
         now_secs = datetime.now().second
         if now_secs < 10:
@@ -275,7 +292,7 @@ class FriarTuckLive:
                 security_bars = self.history(security, bar_count=1, frequency=self._data_frequency, field=None)
                 self._current_security_bars[security] = security_bars
 
-            if self._current_security_bars[security] is None:
+            if self._current_security_bars[security] is None or self._current_security_bars[security].empty:
                 quote_date = datetime.now()
                 quote_date = quote_date.replace(second=0, microsecond=0)
                 self._current_security_bars[security] = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
@@ -290,15 +307,22 @@ class FriarTuckLive:
             if self._current_security_bars[security] is not None:  # and (not self._current_security_bars[security].empty or self._current_security_bars[security].iloc[-1]["price"] == float["nan"]):
                 last_price_list = self.rh_session.get_quote_list(security.symbol, 'symbol,last_trade_price,bid_price,bid_size,ask_price,ask_size')
                 if last_price_list and len(last_price_list) > 0:
-                    if security in self._current_security_bars:
-                        self._current_security_bars[security]["price"] = float(last_price_list[0][1])
-                        self._current_security_bars[security]["bid_price"] = float(last_price_list[0][2])
-                        self._current_security_bars[security]["bid_size"] = float(last_price_list[0][3])
-                        self._current_security_bars[security]["ask_price"] = float(last_price_list[0][4])
-                        self._current_security_bars[security]["ask_size"] = float(last_price_list[0][5])
+                    self._current_security_bars[security]["price"] = float(last_price_list[0][1])
+                    self._current_security_bars[security]["bid_price"] = float(last_price_list[0][2])
+                    self._current_security_bars[security]["bid_size"] = float(last_price_list[0][3])
+                    self._current_security_bars[security]["ask_price"] = float(last_price_list[0][4])
+                    self._current_security_bars[security]["ask_size"] = float(last_price_list[0][5])
+                else:
+                    # self._current_security_bars[security]["price"] = float("nan")
+                    self._current_security_bars[security]["bid_price"] = float("nan")
+                    self._current_security_bars[security]["bid_size"] = float("nan")
+                    self._current_security_bars[security]["ask_price"] = float("nan")
+                    self._current_security_bars[security]["ask_size"] = float("nan")
 
             if not field:
                 return self._current_security_bars[security].iloc[-1]
+
+            # log.info("security_bars(%s): %s" % (security.symbol, self._current_security_bars[security]))
             return self._current_security_bars[security].iloc[-1][field]
 
         else:
