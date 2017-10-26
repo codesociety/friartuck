@@ -147,7 +147,7 @@ def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, 
                 bars = bars.append(bar)
 
     if bars is None:
-        log.warning("Unexpected, could not retrieve quote for security (%s) " % symbol)
+        log.warn("Unexpected, could not retrieve quote for security (%s) " % symbol)
         return None
 
     bars = bars.tail(bar_count)
