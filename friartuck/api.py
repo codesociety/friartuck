@@ -627,8 +627,8 @@ class FriarTuckLive:
         pos_infos = self.rh_session.positions()
         port_info = self.rh_session.portfolios()
         acct_info = self.rh_session.get_account()
-        log.info("account_info:%s" % acct_info)
-        log.info("port_info:%s" % port_info)
+        # log.info("account_info:%s" % acct_info)
+        # log.info("port_info:%s" % port_info)
 
         unsettled_funds = float(acct_info["unsettled_funds"])
         market_value = float(port_info["market_value"])
