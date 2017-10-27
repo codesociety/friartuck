@@ -172,8 +172,6 @@ class Account:
         self.maintenance_margin_requirement = 0
         self.net_leverage = 0
         self.net_liquidation = 0
-        self.regt_equity = 0
-        self.regt_margin = 0
         self.settled_cash = 0
         self.total_positions_value = 0
 
@@ -629,12 +627,16 @@ class FriarTuckLive:
         pos_infos = self.rh_session.positions()
         port_info = self.rh_session.portfolios()
         acct_info = self.rh_session.get_account()
+        log.info("account_info:%s" % acct_info)
+        log.info("port_info:%s" % port_info)
 
         unsettled_funds = float(acct_info["unsettled_funds"])
         market_value = float(port_info["market_value"])
+        equity = float(port_info["equity"])
         cash = float(acct_info["cash"])
         total_cash = cash + unsettled_funds
-        portfolio_value = market_value + total_cash
+        portfolio_value = equity
+        buying_power = equity-market_value
 
         if not self._starting_cash:
             self._starting_cash = portfolio_value
@@ -676,8 +678,8 @@ class FriarTuckLive:
                     unrealized_pl = unrealized_pl + ((last_price * amount) - (cost_basis * amount))
                     long_position_value = long_position_value + (cost_basis * amount)
                 else:
-                    unrealized_pl = unrealized_pl + ((cost_basis * np.abs([amount])) - (last_price * np.abs([amount])))
-                    short_position_value = long_position_value + (cost_basis * np.abs([amount]))
+                    unrealized_pl = unrealized_pl + ((cost_basis * np.abs([amount])[0]) - (last_price * np.abs([amount])[0]))
+                    short_position_value = long_position_value + (cost_basis * np.abs([amount])[0])
 
         pnl = unrealized_pl + unsettled_funds
         leverage = 0
@@ -687,7 +689,7 @@ class FriarTuckLive:
             net_leverage = market_value / portfolio_value
 
         portfolio = Portfolio()
-        portfolio.capital_used = (short_position_value - long_position_value)
+        portfolio.capital_used = np.abs([(short_position_value - long_position_value)])[0]
         portfolio.cash = total_cash
         portfolio.pnl = pnl
         portfolio.positions = positions
@@ -701,19 +703,17 @@ class FriarTuckLive:
 
         account = Account()
         # account.accrued_interest=acct_info
-        account.available_funds = total_cash
-        account.buying_power = float(acct_info["buying_power"])
+        account.available_funds = portfolio_value
+        account.buying_power = buying_power
         account.cushion = total_cash / portfolio_value
         account.day_trades_remaining = float("inf")
         account.equity_with_loan = portfolio_value
-        account.excess_liquidity = total_cash
-        account.initial_margin_requirement = 0
+        account.excess_liquidity = port_info["excess_margin"]
+        account.initial_margin_requirement = float(acct_info["margin_balances"]["margin_limit"]) if "margin_balances" in acct_info and "margin_limit" in acct_info["margin_balances"] else 0
         account.leverage = leverage
-        account.maintenance_margin_requirement = 0
+        account.maintenance_margin_requirement = portfolio_value-float(port_info["excess_margin"])
         account.net_leverage = net_leverage
         account.net_liquidation = portfolio_value
-        account.regt_equity = total_cash
-        account.regt_margin = float("inf")
         account.settled_cash = cash
         account.total_positions_value = market_value
 
