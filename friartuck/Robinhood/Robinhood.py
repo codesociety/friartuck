@@ -765,11 +765,8 @@ class Robinhood:
             transaction = Transaction(transaction)
 
         if transaction == Transaction.BUY and not price:
-            if stop_price:
-                price = round(stop_price+(stop_price*0.05), 2)  # Complying with Robinhood 5% collared
-            else:
-                bid_price = self.quote_data(instrument['symbol'])['bid_price'];
-                price = bid_price
+            bid_price = self.quote_data(instrument['symbol'])['bid_price'];
+            price = bid_price
 
         # if not price:
         #    if transaction == Transaction.BUY:

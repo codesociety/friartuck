@@ -52,13 +52,27 @@ class FriarContext:
 
 
 class Security:
-    def __init__(self, symbol=None, is_tradeable=False, security_type=None, security_detail=None):
+    def __init__(self, symbol, simple_name, min_tick_size=None, is_tradeable=False, security_type=None, security_detail=None):
         self.symbol = symbol
+        self.simple_name = simple_name
+        self.min_tick_size = min_tick_size
         self.is_tradeable = is_tradeable
         self.security_type = security_type
         self.security_detail = {}  # this the raw hash
         if security_detail:
             self.security_detail = security_detail
+
+    def price_convert_up_by_tick_size(self, price):
+        if not self.min_tick_size or self.min_tick_size == 0.0:
+            return price
+
+        return round(np.math.ceil(price / self.min_tick_size) * self.min_tick_size, 7)
+
+    def price_convert_down_by_tick_size(self, price):
+        if not self.min_tick_size or self.min_tick_size == 0.0:
+            return price
+
+        return round(np.math.floor(price / self.min_tick_size) * self.min_tick_size, 7)
 
     def __str__(self):
         return str(self.__dict__)
@@ -133,10 +147,11 @@ class Order:
 
 
 class Position:
-    def __init__(self, amount=0, cost_basis=0, last_sale_price=0):
+    def __init__(self, amount=0, cost_basis=0, last_sale_price=0, created=None):
         self.amount = amount
         self.cost_basis = cost_basis
         self.last_sale_price = last_sale_price
+        self.created = created
 
     def __str__(self):
         return str(self.__dict__)
@@ -428,8 +443,12 @@ class FriarTuckLive:
         if shares < 0:
             transaction = "sell"
 
+        price = order_type.price
+        if order_type.stop_price and not price:
+            price = security.price_convert_up_by_tick_size(order_type.stop_price + (order_type.stop_price * 0.05))  # Complying with Robinhood 5% collared
+
         order_data = self.rh_session.place_order(security.security_detail, quantity=np.abs([shares])[0],
-                                                 price=order_type.price, stop_price=order_type.stop_price,
+                                                 price=price, stop_price=order_type.stop_price,
                                                  transaction=transaction, trigger=trigger, order=tran_type,
                                                  time_in_force=time_in_force)
 
@@ -464,8 +483,13 @@ class FriarTuckLive:
             order.limit = float(result["price"])
 
         order.amount = int(float(result["quantity"]))
+        if result["side"] == "sell":
+            order.amount = -order.amount
         order.symbol = symbol
         order.filled = int(float(result["cumulative_quantity"]))
+        if result["side"] == "sell":
+            order.filled = -order.filled
+
         order.commission = float(result["fees"])
         order.rejected_reason = result["reject_reason"]
         order.time_in_force = result["time_in_force"]
@@ -491,8 +515,14 @@ class FriarTuckLive:
         symbol = sec_detail['symbol']
         is_tradeable = sec_detail['tradeable']
         sec_type = sec_detail['type']
+        simple_name = sec_detail['simple_name']
 
-        sec = Security(symbol, is_tradeable, sec_type, sec_detail)
+        min_tick_size = None
+
+        if "min_tick_size" in sec_detail and sec_detail['min_tick_size']:
+            min_tick_size = float(sec_detail['min_tick_size'])
+
+        sec = Security(symbol, simple_name, min_tick_size, is_tradeable, sec_type, sec_detail)
         self._fetched_securities_cache[symbol] = sec
         return sec
 
@@ -651,6 +681,8 @@ class FriarTuckLive:
         short_position_value = 0
         unrealized_pl = 0
         positions = {}
+
+        # log.info("pos: %s" % pos_infos["results"])
         if pos_infos and pos_infos["results"]:
             for result in pos_infos["results"]:
                 amount = int(float(result["quantity"]))
@@ -670,8 +702,9 @@ class FriarTuckLive:
 
                 self._security_last_known_price[security] = last_price
 
+                created = utc_to_local(datetime.strptime(result["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
                 cost_basis = float(result["average_buy_price"])
-                positions[security] = Position(amount, cost_basis, last_price)
+                positions[security] = Position(amount, cost_basis, last_price, created)
 
                 # position_value = position_value+(cost_basis*amount)
                 if amount > 0:

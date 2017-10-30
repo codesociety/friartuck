@@ -49,6 +49,7 @@ def initialize(context, data):
     context.wtw = lookup_security("WTW")
     context.fit = lookup_security("FIT")
     context.gevo = lookup_security("GEVO")
+    context.czr = lookup_security("CZR")
     log.info(context.account)
     log.info(context.portfolio)
     log.info("pnl(%s)" % context.portfolio.pnl)
@@ -58,7 +59,8 @@ def initialize(context, data):
     hist_quotes = data.history([context.aapl, context.wtw], frequency='1m', bar_count=10, field='close')
     log.debug(hist_quotes)
 
-    # order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
+    #order_id = order_shares(security=context.czr, shares=1, order_type=OrderType(stop_price=15.51), time_in_force='gtc')
+    #order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
     #order_id = order_for_robinhood(context=context, security=context.gevo, weight=1.0, order_type=OrderType(stop_price=0.50))
     #order_id = order_shares(context.gevo, -1, order_type=OrderType(stop_price=0.50), time_in_force='gtc')
     #order = get_order(order_id)
@@ -70,6 +72,13 @@ def initialize(context, data):
     log.info("bid_price=(%s)" % bid_price)
     ask_price = data.current(context.aapl, field='ask_price')
     log.info("ask_price=(%s)" % ask_price)
+
+    price = 13.18
+    log.info("CZR price_convert_up_by_tick_size price(%s) converted (%s)" % (price, context.czr.price_convert_up_by_tick_size(price)))
+    log.info("CZR price_convert_down_by_tick_size price(%s) converted (%s)" % (price, context.czr.price_convert_down_by_tick_size(price)))
+    price = 162.76
+    log.info("AAPL price_convert_up_by_tick_size price(%s) converted (%s)" % (price, context.aapl.price_convert_up_by_tick_size(price)))
+    log.info("AAPL price_convert_down_by_tick_size price(%s) converted (%s)" % (price, context.aapl.price_convert_down_by_tick_size(price)))
 
 
 def on_market_open(context, data):

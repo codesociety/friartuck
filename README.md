@@ -176,6 +176,8 @@ pip install -r requirements.txt
         
     Security Object: Used when interacting with the broker.
         symbol (string): Stock symbol
+        simple_name (string): User-friendly security name
+        min_tick_size (float): minimum tick-size of the production, important when supplying a price for an order.
         is_tradeable (boolean): Indicates if the security is tradeable
         security_type (String): The security type
         security_detail (json object): The actual security details from Robinhood
@@ -222,6 +224,7 @@ pip install -r requirements.txt
         amount (int): The number of shares
         cost_basis (float): The average price of the position.
         last_sale_price (float): The more recent quote trade price for the security.
+        created (datetime): create datetime of the position
         
     Account Object: These fields are from Quantopian, I attempt to map them with fields from and calcs from Robinhood
         accrued_interest (float): This will always be with Robinhood(could not find a matching field) 0
