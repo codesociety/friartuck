@@ -447,6 +447,9 @@ class FriarTuckLive:
         if order_type.stop_price and not price:
             price = security.price_convert_up_by_tick_size(order_type.stop_price + (order_type.stop_price * 0.05))  # Complying with Robinhood 5% collared
 
+        if price:
+            price = round(price, 2)
+
         order_data = self.rh_session.place_order(security.security_detail, quantity=np.abs([shares])[0],
                                                  price=price, stop_price=order_type.stop_price,
                                                  transaction=transaction, trigger=trigger, order=tran_type,
