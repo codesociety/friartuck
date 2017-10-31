@@ -73,6 +73,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
 
         if isinstance(symbol, str):
             quotes = _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, field);
+            """
             if quotes is None:
                 quote_date = datetime.now()
                 quote_date = quote_date.replace(second=0, microsecond=0)
@@ -83,6 +84,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
                                             'low': float("nan"),
                                             'close': float("nan"),
                                             'volume': int(0)})
+            """
             return {symbol: quotes}
 
         symbol_bars = {}
@@ -90,6 +92,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
             quotes = _load_quotes(sym, frequency, interval, period_factor, period, bar_count, field)
             if quotes is not None:
                 symbol_bars[sym] = quotes
+            """
             else:
                 quote_date = datetime.now()
                 quote_date = quote_date.replace(second=0, microsecond=0)
@@ -100,7 +103,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
                                                       'low': float("nan"),
                                                       'close': float("nan"),
                                                       'volume': int(0)})
-
+            """
         return symbol_bars
 
 
@@ -147,8 +150,17 @@ def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, 
                 bars = bars.append(bar)
 
     if bars is None:
-        log.warn("Unexpected, could not retrieve quote for security (%s) " % symbol)
-        return None
+        # log.warn("Unexpected, could not retrieve quote for security (%s) " % symbol)
+        quote_date = datetime.now()
+        quote_date = quote_date.replace(second=0, microsecond=0)
+        bars = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
+                            data={'price': float("nan"),
+                                  'open': float("nan"),
+                                  'high': float("nan"),
+                                  'low': float("nan"),
+                                  'close': float("nan"),
+                                  'volume': int(0)})
+        # return bars
 
     bars = bars.tail(bar_count)
     if field:
