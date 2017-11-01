@@ -109,7 +109,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
 
 def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, field, wait_time=None):
     target_url = "https://finance.google.com/finance/getprices?i=" + str(interval) + "&p=" + str(period_factor) + period + "&f=d,o,h,l,c,v&q=" + symbol
-    log.debug(target_url)
+    # log.debug(target_url)
     # data = urlopen(target_url, timeout=10)  # it's a file like object and works just like a file
     bars = None
     unix_date = None
