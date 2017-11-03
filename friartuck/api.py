@@ -445,7 +445,8 @@ class FriarTuckLive:
 
         price = order_type.price
         if shares > 0 and order_type.stop_price and not price:
-            price = security.price_convert_up_by_tick_size(order_type.stop_price + (order_type.stop_price * 0.05))  # Complying with Robinhood 5% collared
+            # price = security.price_convert_up_by_tick_size(order_type.stop_price + (order_type.stop_price * 0.05))  # Complying with Robinhood 5% collared
+            price = security.price_convert_up_by_tick_size(order_type.stop_price + order_type.stop_price)  # Complying with Robinhood 5% collared
 
         if price:
             price = round(price, 2)
@@ -468,6 +469,7 @@ class FriarTuckLive:
 
     def _build_order_object(self, result, symbol=None):
         status = self._order_status_map[result["state"]]
+        log.debug(result)
 
         if not symbol:
             instrument = self.rh_session.get_url_content_json(result["instrument"])
