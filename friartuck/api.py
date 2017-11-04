@@ -446,7 +446,7 @@ class FriarTuckLive:
         price = order_type.price
         if shares > 0 and order_type.stop_price and not price:
             # price = security.price_convert_up_by_tick_size(order_type.stop_price + (order_type.stop_price * 0.05))  # Complying with Robinhood 5% collared
-            price = security.price_convert_up_by_tick_size(order_type.stop_price + order_type.stop_price)  # Complying with Robinhood 5% collared
+            price = security.price_convert_up_by_tick_size(order_type.stop_price)  # Complying with Robinhood 5% collared
 
         if price:
             price = round(price, 2)
