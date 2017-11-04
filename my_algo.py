@@ -66,6 +66,8 @@ def initialize(context, data):
     #order = get_order(order_id)
     #log.info("order=%s" % order)
 
+    # open_orders = get_open_orders()
+
     current_quote = data.current(context.aapl, field=['bid_price', 'ask_price'])
     log.info(current_quote)
     bid_price = data.current(context.aapl, field='bid_price')

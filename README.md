@@ -212,10 +212,10 @@ pip install -r requirements.txt
     Portfolio Object:
         capital_used (float): net capital at play (Total cost of shorts) minus (Total cost of longs)
         cash (float): total cash at hand available for trading (robinhood unsettled cash + cash)
-        pnl (float): net profit_loss (unrealized_pl + unsettled_funds)
+        pnl (float): net profit_loss (equity - uncleared_deposits - equity_previous_close)
         positions (dict): key=Security object, value=Position object
         portfolio_value (float): total value of the portfolio (robinhood unsettled cash + cash + market-value)
-        positions_value (float): market-value (Robinhood)
+        positions_value (float): market_value (Robinhood)
         returns (float): total returns since starting the FriarTuck process ((portfolio_value - starting_cash) / starting_cash)
         starting_cash (float): total available cash at the start of the FriarTuck process
         start_date (datetime): The date and time the FriarTuck process started
@@ -229,7 +229,7 @@ pip install -r requirements.txt
     Account Object: These fields are from Quantopian, I attempt to map them with fields from and calcs from Robinhood
         accrued_interest (float): This will always be with Robinhood(could not find a matching field) 0
         available_funds (float): cash available for trading (Robinhood unsettled cash + cash)
-        buying_power (float): Robinhood buying power
+        buying_power (float): value available to buy stock (equity - market_value - cash_held_for_orders)
         cushion (float): (Robinhood unsettled cash + cash) / portfolio_value
         day_trades_remaining (int): Infinity (could not identify a Robinhood field to match)
         equity_with_loan (float): portfolio_value

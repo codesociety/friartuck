@@ -383,6 +383,7 @@ class FriarTuckLive:
     def get_open_orders(self, security=None):
         open_orders = {}
         order_data = self.rh_session.order_history()
+        # log.info("order_data: %s" % order_data)
         if order_data and "results" in order_data:
             for result in order_data["results"]:
                 status = self._order_status_map[result["state"]]
@@ -662,16 +663,20 @@ class FriarTuckLive:
         pos_infos = self.rh_session.positions()
         port_info = self.rh_session.portfolios()
         acct_info = self.rh_session.get_account()
+        # log.info("pos_infos:%s" % pos_infos)
         # log.info("account_info:%s" % acct_info)
         # log.info("port_info:%s" % port_info)
 
         unsettled_funds = float(acct_info["unsettled_funds"])
         market_value = float(port_info["market_value"])
         equity = float(port_info["equity"])
+        yesterday_equity = float(port_info["equity_previous_close"])
+        uncleared_deposits = float(acct_info["uncleared_deposits"])
+        cash_held_for_orders = float(acct_info["cash_held_for_orders"])
         cash = float(acct_info["cash"])
         total_cash = cash + unsettled_funds
         portfolio_value = equity
-        buying_power = equity-market_value
+        buying_power = equity-market_value-cash_held_for_orders
 
         if not self._starting_cash:
             self._starting_cash = portfolio_value
@@ -719,7 +724,7 @@ class FriarTuckLive:
                     unrealized_pl = unrealized_pl + ((cost_basis * np.abs([amount])[0]) - (last_price * np.abs([amount])[0]))
                     short_position_value = long_position_value + (cost_basis * np.abs([amount])[0])
 
-        pnl = unrealized_pl + unsettled_funds
+        pnl = equity-uncleared_deposits-yesterday_equity  # unrealized_pl + unsettled_funds
         leverage = 0
         net_leverage = 0
         if portfolio_value > 0:
