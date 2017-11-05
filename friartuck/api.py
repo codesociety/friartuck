@@ -133,6 +133,7 @@ class Order:
         """
         self.status = None
         self.created = None
+        self.updated = None
         self.stop = None
         self.limit = None
         self.amount = 0
@@ -479,6 +480,7 @@ class FriarTuckLive:
         order = Order(result["id"])
         order.status = status
         order.created = utc_to_local(datetime.strptime(result["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
+        order.updated = utc_to_local(datetime.strptime(result["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
 
         order.stop = None
         order.limit = None
