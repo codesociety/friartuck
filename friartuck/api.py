@@ -388,7 +388,7 @@ class FriarTuckLive:
         if order_data and "results" in order_data:
             for result in order_data["results"]:
                 status = self._order_status_map[result["state"]]
-                if status != 0:
+                if status not in [0,4]:
                     # not open order
                     continue
                 instrument = self.rh_session.get_url_content_json(result["instrument"])
@@ -535,55 +535,57 @@ class FriarTuckLive:
         return sec
 
     def _time_interval_processor(self):
-        log.debug("In time interval processor")
-        temp_datetime = datetime.now()
-        self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
+        now = datetime.now()
+        if now.weekday() not in [5, 6]:
+            log.debug("In time interval processor")
+            temp_datetime = datetime.now()
+            self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
 
-        market_open_temp = self.is_market_open
-        self._current_security_bars = {}
-        if not self._load_all_data():
-            # Load Data Failed... we can't go further until we get fresh data... bad things can happend if algo operate with stale data.
-            # Set reload data again in 1 minute.
-            log.debug("Data retrieval was adnormal we'll check again next minute to try again ")
-            _set_trigger_timer(minute_interval=1, callback_function=self._time_interval_processor)
-            return schedule.CancelJob
+            market_open_temp = self.is_market_open
+            self._current_security_bars = {}
+            if not self._load_all_data():
+                # Load Data Failed... we can't go further until we get fresh data... bad things can happend if algo operate with stale data.
+                # Set reload data again in 1 minute.
+                log.debug("Data retrieval was adnormal we'll check again next minute to try again ")
+                _set_trigger_timer(minute_interval=1, callback_function=self._time_interval_processor)
+                return schedule.CancelJob
 
-        # update context status
-        self.context.is_market_open = self.is_market_open
-        if (not self._initialized or not market_open_temp) and self.is_market_open:
-            # if market was not open and is now open... initialize algo
+            # update context status
+            self.context.is_market_open = self.is_market_open
+            if (not self._initialized or not market_open_temp) and self.is_market_open:
+                # if market was not open and is now open... initialize algo
+                try:
+                    if hasattr(self.active_algo, 'on_market_open'):
+                        self.active_algo.on_market_open(self.context, self.friar_data)
+
+                        # self.active_algo.handle_data(self.context, self.friar_data)
+                except Exception as inst:
+                    log.error("Error occurred while invoking initialize: %s " % inst)
+                    traceback.print_exc()
+
+            if self._data_frequency == "1d":
+                # with this frequency, it's a market closed last update whenever this method is call
+                self._market_closed_lastupdate = True
+            elif self._data_frequency == "1h":
+                minutes_after_open_time = self.market_opens_at + timedelta(hours=1)
+                minutes_after_open_time = minutes_after_open_time.replace(minute=0, second=0, microsecond=0)
+            else:
+                minutes_after_open_time = self.market_opens_at + timedelta(minutes=1)  # Adding one more call
+
+            if market_open_temp and not self.is_market_open:
+                # If market used to be open and at this update is now closed, we want to call handle_data one more time
+                self._market_closed_lastupdate = True  # we want the algo to be called one more time.
+
+            current_time = datetime.now()
             try:
-                if hasattr(self.active_algo, 'on_market_open'):
-                    self.active_algo.on_market_open(self.context, self.friar_data)
+                if (self.is_market_open and current_time >= minutes_after_open_time) or self._market_closed_lastupdate:  # current_time < minutes_after_close_time:
+                    self.active_algo.handle_data(self.context, self.friar_data)
 
-                    # self.active_algo.handle_data(self.context, self.friar_data)
-            except Exception as inst:
-                log.error("Error occurred while invoking initialize: %s " % inst)
+                    if self._market_closed_lastupdate:
+                        self._market_closed_lastupdate = False
+            except Exception as e:
+                log.error("Error occurred while invoking handle_data: %s " % e)
                 traceback.print_exc()
-
-        if self._data_frequency == "1d":
-            # with this frequency, it's a market closed last update whenever this method is call
-            self._market_closed_lastupdate = True
-        elif self._data_frequency == "1h":
-            minutes_after_open_time = self.market_opens_at + timedelta(hours=1)
-            minutes_after_open_time = minutes_after_open_time.replace(minute=0, second=0, microsecond=0)
-        else:
-            minutes_after_open_time = self.market_opens_at + timedelta(minutes=1)  # Adding one more call
-
-        if market_open_temp and not self.is_market_open:
-            # If market used to be open and at this update is now closed, we want to call handle_data one more time
-            self._market_closed_lastupdate = True  # we want the algo to be called one more time.
-
-        current_time = datetime.now()
-        try:
-            if (self.is_market_open and current_time >= minutes_after_open_time) or self._market_closed_lastupdate:  # current_time < minutes_after_close_time:
-                self.active_algo.handle_data(self.context, self.friar_data)
-
-                if self._market_closed_lastupdate:
-                    self._market_closed_lastupdate = False
-        except Exception as e:
-            log.error("Error occurred while invoking handle_data: %s " % e)
-            traceback.print_exc()
 
         if self._data_frequency == "1d":
             direct_time = self.market_closes_at
