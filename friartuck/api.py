@@ -376,6 +376,9 @@ class FriarTuckLive:
             return return_bars
 
     def get_order(self, id):
+        if not id:
+            return
+
         url = self.rh_session.endpoints['orders'] + id + "/"
         order_data = self.rh_session.get_url_content_json(url)
 
