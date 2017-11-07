@@ -124,6 +124,10 @@ def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, 
             if not unix_date and not line.startswith("a"):
                 continue
 
+            if line.startswith("TIMEZONE_OFFSET"):
+                print("timezone change: %s" % line)
+                continue
+
             offset = 0
             (date, close, high, low, open, volume) = line.split(',')
             if date.startswith("a"):
