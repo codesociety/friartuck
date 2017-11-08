@@ -147,6 +147,17 @@ pip install -r requirements.txt
     log.info("order=%s" % order)
     
     ...
+    last_filled_buy_order = get_last_filled_buy_order(context.aapl)
+    
+    ...
+    last_filled_sell_order = get_last_filled_sell_order(context.aapl)
+    
+    ...
+    last_filled_orders_by_side = get_last_filled_orders_by_side(context.aapl)
+    last_filled_buy_order = last_filled_orders_by_side["buy"]
+    last_filled_sell_order = last_filled_orders_by_side["sell"]
+    
+    ...
     # Retrieve all open orders
     open_orders = get_open_orders()
     for stock_symbol in open_orders:

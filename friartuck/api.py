@@ -391,7 +391,7 @@ class FriarTuckLive:
         if order_data and "results" in order_data:
             for result in order_data["results"]:
                 status = self._order_status_map[result["state"]]
-                if status not in [0,4]:
+                if status not in [0, 4]:
                     # not open order
                     continue
                 instrument = self.rh_session.get_url_content_json(result["instrument"])
@@ -414,9 +414,65 @@ class FriarTuckLive:
 
         return open_orders
 
+    def get_last_filled_buy_order(self, security):
+        return self._get_last_filled_order_by_side(security=security)["buy"]
+
+    def get_last_filled_sell_order(self, security):
+        return self._get_last_filled_order_by_side(security=security)["sell"]
+
+    def get_last_filled_orders_by_side(self, security):
+        return self._get_last_filled_order_by_side(security=security)
+
+    def _get_last_filled_order_by_side(self, security):
+        latest_buy_order = None
+        latest_sell_order = None
+        order_data = self.rh_session.order_history()
+        # log.info("order_data: %s" % order_data)
+        if order_data and "results" in order_data:
+            for result in order_data["results"]:
+                status = self._order_status_map[result["state"]]
+                if status not in [1]:  # or result["side"] != side:
+                    # not open order
+                    continue
+
+                instrument = self.rh_session.get_url_content_json(result["instrument"])
+                symbol = instrument["symbol"]
+                if security and security.symbol != symbol:
+                    # not for the the security desired
+                    continue
+
+                if result["side"] == "buy":
+                    if not latest_buy_order:
+                        latest_buy_order = self._build_order_object(result, symbol)
+                        continue
+
+                    updated = utc_to_local(datetime.strptime(result["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
+                    if latest_buy_order.updated > updated:
+                        continue
+
+                    latest_buy_order = result
+
+                if result["side"] == "sell":
+                    if not latest_sell_order:
+                        latest_sell_order = self._build_order_object(result, symbol)
+                        continue
+
+                    updated = utc_to_local(datetime.strptime(result["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
+                    if latest_sell_order.updated > updated:
+                        continue
+
+                    latest_sell_order = result
+
+        return {"sell": latest_sell_order, "buy": latest_buy_order}
+
     def cancel_order(self, order_id):
         url = self.rh_session.endpoints['orders'] + order_id + "/"
         order_data = self.rh_session.get_url_content_json(url)
+
+        status = self._order_status_map[order_data["state"]]
+        if status not in [0, 4]:
+            log.info("order is not open, no need to cancel: %s" % order_data)
+            return
 
         if order_data and "cancel" in order_data and order_data["cancel"]:
             self.rh_session.post_url_content_json(order_data["cancel"])

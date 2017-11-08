@@ -80,6 +80,18 @@ def get_order(order):
     return friar_tuck.get_order(order)
 
 
+def get_last_filled_buy_order(security):
+    return friar_tuck.get_last_filled_buy_order(security=security)
+
+
+def get_last_filled_sell_order(security):
+    return friar_tuck.get_last_filled_sell_order(security=security)
+
+
+def get_last_filled_orders_by_side(security):
+    return friar_tuck.get_last_filled_orders_by_side(security=security)
+
+
 def get_open_orders(security=None):
     return friar_tuck.get_open_orders(security)
 
@@ -127,6 +139,9 @@ def start_engine(input_args):
 
     trading_algo.lookup_security = lookup_security
     trading_algo.get_order = get_order
+    trading_algo.get_last_filled_buy_order = get_last_filled_buy_order
+    trading_algo.get_last_filled_sell_order = get_last_filled_sell_order
+    trading_algo.get_last_filled_orders_by_side = get_last_filled_orders_by_side
     trading_algo.get_open_orders = get_open_orders
     trading_algo.cancel_order = cancel_order
     trading_algo.order_shares = order_shares

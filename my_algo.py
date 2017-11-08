@@ -69,6 +69,10 @@ def initialize(context, data):
 
     # open_orders = get_open_orders()
 
+    last_orders_by_side = get_last_filled_orders_by_side(context.gevo)
+    log.info("last_buy: %s" % last_orders_by_side["buy"])
+    log.info("last_sell: %s" % last_orders_by_side["sell"])
+
     current_quote = data.current(context.aapl, field=['bid_price', 'ask_price'])
     log.info(current_quote)
     bid_price = data.current(context.aapl, field='bid_price')
