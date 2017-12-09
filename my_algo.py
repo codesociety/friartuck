@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from datetime import datetime, timedelta
 import logging
 import pandas as pd
 
@@ -56,9 +57,16 @@ def initialize(context, data):
     for sec in context.portfolio.positions:
         log.info("symbol(%s) pos(%s) " % (sec.symbol, context.portfolio.positions[sec]))
 
-    hist_quotes = data.history([context.aapl, context.wtw], frequency='1m', bar_count=10, field='close')
+    hist_quotes = data.history([context.aapl, context.wtw], frequency='15m', bar_count=1400, field=['open', 'close'])
     log.debug(hist_quotes)
 
+    # fifteenMinInSecs = (15*60)
+    now = datetime.now()
+    multiples = int(now.minute/15)
+    diff = now.minute-(multiples*15)
+    next_trig = now + timedelta(minutes=(15-diff))
+
+    log.info("next trigger:%s, mult:%s, diff:%s" % (next_trig, multiples, diff))
     # order_id = order_shares(security=context.czr, shares=1, order_type=OrderType(stop_price=15.51), time_in_force='gtc')
     # order_id = order_for_robinhood(context=context, security=context.fit, weight=1.0, order_type=OrderType(stop_price=6.56))
     # order_id = order_for_robinhood(context=context, security=context.gevo, weight=1.0, order_type=OrderType(stop_price=0.50))
@@ -68,7 +76,7 @@ def initialize(context, data):
     # log.info("order=%s" % order)
 
     # open_orders = get_open_orders()
-
+    """
     last_orders_by_side = get_last_filled_orders_by_side(context.gevo)
     log.info("last_buy: %s" % last_orders_by_side["buy"])
     log.info("last_sell: %s" % last_orders_by_side["sell"])
@@ -86,7 +94,7 @@ def initialize(context, data):
     price = 162.76
     log.info("AAPL price_convert_up_by_tick_size price(%s) converted (%s)" % (price, context.aapl.price_convert_up_by_tick_size(price)))
     log.info("AAPL price_convert_down_by_tick_size price(%s) converted (%s)" % (price, context.aapl.price_convert_down_by_tick_size(price)))
-
+    """
 
 def on_market_open(context, data):
     log.info("on market open")
