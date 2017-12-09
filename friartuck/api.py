@@ -225,7 +225,7 @@ class FriarTuckLive:
     _security_last_known_price = {}
     _order_status_map = {"confirmed": 0, "partially_filled": 0, "filled": 1, "cancelled": 2, "rejected": 3, "queued": 4, "unconfirmed": 4, "failed": 5}
 
-    def __init__(self, user_name, password, data_frequency="1h", log_file=None):
+    def __init__(self, user_name, password, data_frequency="1h"):
         if not self._initialized:
             self.run_thread = None
             self.engine_running = False
@@ -530,7 +530,7 @@ class FriarTuckLive:
 
     def _build_order_object(self, result, symbol=None):
         status = self._order_status_map[result["state"]]
-        log.debug(result)
+        # log.debug(result)
 
         if not symbol:
             instrument = self.rh_session.get_url_content_json(result["instrument"])
@@ -628,6 +628,9 @@ class FriarTuckLive:
             elif self._data_frequency == "1h":
                 minutes_after_open_time = self.market_opens_at + timedelta(hours=1)
                 minutes_after_open_time = minutes_after_open_time.replace(minute=0, second=0, microsecond=0)
+            elif self._data_frequency == "15m":
+                minutes_after_open_time = self.market_opens_at + timedelta(minutes=15)
+                minutes_after_open_time = minutes_after_open_time.replace(second=0, microsecond=0)
             else:
                 minutes_after_open_time = self.market_opens_at + timedelta(minutes=1)  # Adding one more call
 
@@ -662,6 +665,19 @@ class FriarTuckLive:
             else:
                 direct_time = datetime.now() + timedelta(hours=1)  # update every hour
                 direct_time = direct_time.replace(minute=0, second=0, microsecond=0)
+        elif self._data_frequency == "15m":
+            if not self.is_market_open and datetime.now() < self.market_opens_at:
+                direct_time = self.market_opens_at
+            elif not self.is_market_open and datetime.now() > self.market_closes_at:
+                market_info = self.rh_session.get_url_content_json(self.market_info["next_open_hours"])
+                direct_time = utc_to_local(datetime.strptime(market_info["opens_at"], "%Y-%m-%dT%H:%M:%SZ"))
+            else:
+                now = datetime.now()
+                multiples = int(now.minute / 15)
+                diff = now.minute - (multiples * 15)
+                direct_time = now + timedelta(minutes=(15 - diff))
+                # direct_time = datetime.now() + timedelta(minutes=15)  # update every 15 minutes
+                direct_time = direct_time.replace(second=0, microsecond=0)
         else:
             direct_time = datetime.now() + timedelta(minutes=1)  # update every minute
             direct_time = direct_time.replace(second=0, microsecond=0)
