@@ -42,7 +42,7 @@ class QuoteSourceAbstract:
 
 
 class GoogleQuoteSource(QuoteSourceAbstract):
-    allowed_history_frequency = {'1m': '1minute', '1h': '1hour', '1d': 'day'}
+    allowed_history_frequency = {'1m': '1minute', '15m': '15minute', '1h': '1hour', '1d': 'day'}
 
     def __init__(self):
         pass
@@ -59,6 +59,13 @@ class GoogleQuoteSource(QuoteSourceAbstract):
             period = 'd'
             if frequency == "1m":
                 period_factor = int(np.ceil([bar_count / 390])[0])
+            elif frequency == "15m":
+                if period_factor > 1400:
+                    period = 'Y'
+                    period_factor = int(np.ceil([bar_count / 7040])[0])
+                else:
+                    interval = 900
+                    period_factor = int(np.ceil([bar_count / 28])[0])
             elif frequency == "1h":
                 if period_factor > 350:
                     period = 'Y'
@@ -137,7 +144,7 @@ def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, 
                 offset = int(date)
 
             quote_date = datetime.utcfromtimestamp(unix_date + (offset * interval))
-            if frequency == "1m" or frequency == "1h":
+            if frequency == "1m" or frequency == "15m" or frequency == "1h":
                 quote_date = utc_to_local(quote_date)
 
             bar = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
