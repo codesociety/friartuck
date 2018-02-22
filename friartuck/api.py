@@ -236,7 +236,7 @@ class FriarTuckLive:
             # self.long_only=False
             self.quote_source = GoogleQuoteSource()
             self.context = FriarContext()
-            self.rh_session = Robinhood();
+            self.rh_session = Robinhood()
             self.rh_session.login(username=user_name, password=password)
             self.friar_data = FriarData(self)
 
@@ -631,6 +631,9 @@ class FriarTuckLive:
             elif self._data_frequency == "15m":
                 minutes_after_open_time = self.market_opens_at + timedelta(minutes=15)
                 minutes_after_open_time = minutes_after_open_time.replace(second=0, microsecond=0)
+            elif self._data_frequency == "5m":
+                minutes_after_open_time = self.market_opens_at + timedelta(minutes=5)
+                minutes_after_open_time = minutes_after_open_time.replace(second=0, microsecond=0)
             else:
                 minutes_after_open_time = self.market_opens_at + timedelta(minutes=1)  # Adding one more call
 
@@ -677,6 +680,19 @@ class FriarTuckLive:
                 diff = now.minute - (multiples * 15)
                 direct_time = now + timedelta(minutes=(15 - diff))
                 # direct_time = datetime.now() + timedelta(minutes=15)  # update every 15 minutes
+                direct_time = direct_time.replace(second=0, microsecond=0)
+        elif self._data_frequency == "5m":
+            if not self.is_market_open and datetime.now() < self.market_opens_at:
+                direct_time = self.market_opens_at
+            elif not self.is_market_open and datetime.now() > self.market_closes_at:
+                market_info = self.rh_session.get_url_content_json(self.market_info["next_open_hours"])
+                direct_time = utc_to_local(datetime.strptime(market_info["opens_at"], "%Y-%m-%dT%H:%M:%SZ"))
+            else:
+                now = datetime.now()
+                multiples = int(now.minute / 5)
+                diff = now.minute - (multiples * 5)
+                direct_time = now + timedelta(minutes=(5 - diff))
+                # direct_time = datetime.now() + timedelta(minutes=5)  # update every 5 minutes
                 direct_time = direct_time.replace(second=0, microsecond=0)
         else:
             direct_time = datetime.now() + timedelta(minutes=1)  # update every minute

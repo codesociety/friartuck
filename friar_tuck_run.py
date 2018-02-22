@@ -37,7 +37,7 @@ parser.add_argument('--algo_script', action="store", dest="algo_script", help="A
 parser.add_argument('--config_file', action="store", dest="config_file",
                     help="Configuration file which should include credentials")
 parser.add_argument('--data_frequency', action="store", dest="data_frequency",
-                    help="[1m, 1h, 1d] The frequency of bar data... default is 1h")
+                    help="[1m, 5m, 15m, 1h, 1d] The frequency of bar data... default is 1h")
 # parser.add_argument('--tzone', action="store", dest="tzone",  help="Time_zone")
 
 log = logging.getLogger("friar_tuck")
@@ -46,6 +46,7 @@ PATH = path.abspath(path.dirname(__file__))
 ROOT = path.dirname(PATH)
 
 friar_tuck = None
+
 
 def get_config(config_filename):
     friar_config = configparser.ConfigParser(

@@ -42,7 +42,7 @@ class QuoteSourceAbstract:
 
 
 class GoogleQuoteSource(QuoteSourceAbstract):
-    allowed_history_frequency = {'1m': '1minute', '15m': '15minute', '1h': '1hour', '1d': 'day'}
+    allowed_history_frequency = {'1m': '1minute', '5m': '5minute', '15m': '15minute', '1h': '1hour', '1d': 'day'}
 
     def __init__(self):
         pass
@@ -50,7 +50,7 @@ class GoogleQuoteSource(QuoteSourceAbstract):
     def fetch_quotes(self, symbol, bar_count=1, frequency='1m', field=None):
         if frequency not in self.allowed_history_frequency:
             log.warning("frequency used (%s) is not allowed, the allowable list includes (%s)" % (frequency, self.allowed_history_frequency))
-            return [];
+            return []
 
         interval = 60
         period_factor = bar_count
@@ -59,17 +59,24 @@ class GoogleQuoteSource(QuoteSourceAbstract):
             period = 'd'
             if frequency == "1m":
                 period_factor = int(np.ceil([bar_count / 390])[0])
+            elif frequency == "5m":
+                if period_factor > 4200:  # 1/5=12, 12*350
+                    period = 'Y'
+                    period_factor = int(np.ceil([bar_count / 19656])[0])  # 78*252 = 19656
+                else:
+                    interval = 300
+                    period_factor = int(np.ceil([bar_count / 78])[0])
             elif frequency == "15m":
                 if period_factor > 1400:
                     period = 'Y'
-                    period_factor = int(np.ceil([bar_count / 7040])[0])
+                    period_factor = int(np.ceil([bar_count / 7056])[0])  # 28*252 = 7056
                 else:
                     interval = 900
                     period_factor = int(np.ceil([bar_count / 28])[0])
             elif frequency == "1h":
                 if period_factor > 350:
                     period = 'Y'
-                    period_factor = int(np.ceil([bar_count / 1760])[0])
+                    period_factor = int(np.ceil([bar_count / 1764])[0])
                 else:
                     interval = 3600
                     period_factor = int(np.ceil([bar_count / 7])[0])
@@ -144,7 +151,7 @@ def _load_quotes(symbol, frequency, interval, period_factor, period, bar_count, 
                 offset = int(date)
 
             quote_date = datetime.utcfromtimestamp(unix_date + (offset * interval))
-            if frequency == "1m" or frequency == "15m" or frequency == "1h":
+            if frequency == "1m" or frequency == "5m" or frequency == "15m" or frequency == "1h":
                 quote_date = utc_to_local(quote_date)
 
             bar = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
