@@ -190,6 +190,7 @@ class Account:
         self.net_liquidation = 0
         self.settled_cash = 0
         self.total_positions_value = 0
+        self.unallocated_margin_cash = 0
 
     def __str__(self):
         return str(self.__dict__)
@@ -596,6 +597,7 @@ class FriarTuckLive:
     def _time_interval_processor(self):
         now = datetime.now()
         if now.weekday() not in [5, 6]:
+            # if now.weekday() not in [6]:
             log.debug("In time interval processor")
             temp_datetime = datetime.now()
             self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
@@ -743,6 +745,7 @@ class FriarTuckLive:
             market_info = self.rh_session.get_url_content_json(market_info["next_open_hours"])
 
         self.market_info = market_info
+        # self.market_opens_at = datetime.now().replace(hour=8, minute=30, second=0, microsecond=0)  # utc_to_local(datetime.strptime(market_info["opens_at"], "%Y-%m-%dT%H:%M:%SZ"))
         self.market_opens_at = utc_to_local(datetime.strptime(market_info["opens_at"], "%Y-%m-%dT%H:%M:%SZ"))
         self.market_closes_at = utc_to_local(datetime.strptime(market_info["closes_at"], "%Y-%m-%dT%H:%M:%SZ"))
 
@@ -854,6 +857,7 @@ class FriarTuckLive:
         account.net_liquidation = portfolio_value
         account.settled_cash = cash
         account.total_positions_value = market_value
+        account.unallocated_margin_cash = acct_info["unallocated_margin_cash"]
 
         self.context.account = account
 
