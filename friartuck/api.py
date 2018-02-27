@@ -153,6 +153,8 @@ class Position:
         self.cost_basis = cost_basis
         self.last_sale_price = last_sale_price
         self.created = created
+        self.day_cost_basis = 0.0
+        self.day_amount = 0
 
     def __str__(self):
         return str(self.__dict__)
@@ -812,7 +814,14 @@ class FriarTuckLive:
 
                 created = utc_to_local(datetime.strptime(result["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
                 cost_basis = float(result["average_buy_price"])
-                positions[security] = Position(amount, cost_basis, last_price, created)
+                position = Position(amount, cost_basis, last_price, created)
+                if "intraday_quantity" in result:
+                    position.day_amount = int(float(result["intraday_quantity"]))
+
+                if "intraday_average_buy_price" in result:
+                    position.day_cost_basis = int(float(result["intraday_average_buy_price"]))
+
+                positions[security] = position
 
                 # position_value = position_value+(cost_basis*amount)
                 if amount > 0:
@@ -857,7 +866,8 @@ class FriarTuckLive:
         account.net_liquidation = portfolio_value
         account.settled_cash = cash
         account.total_positions_value = market_value
-        account.unallocated_margin_cash = acct_info["unallocated_margin_cash"]
+        if "unallocated_margin_cash" in acct_info:
+            account.unallocated_margin_cash = float(acct_info["unallocated_margin_cash"])
 
         self.context.account = account
 
