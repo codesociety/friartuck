@@ -33,7 +33,7 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 from friartuck.Robinhood import Robinhood
-from friartuck.quote_source import GoogleQuoteSource
+from friartuck.quote_source import FriarTuckQuoteSource
 from friartuck import utc_to_local
 from collections import Iterable
 from threading import Thread
@@ -148,11 +148,12 @@ class Order:
 
 
 class Position:
-    def __init__(self, amount=0, cost_basis=0, last_sale_price=0, created=None):
+    def __init__(self, amount=0, cost_basis=0, last_sale_price=0, created=None, updated=None):
         self.amount = amount
         self.cost_basis = cost_basis
         self.last_sale_price = last_sale_price
         self.created = created
+        self.updated = updated
         self.day_cost_basis = 0.0
         self.day_amount = 0
 
@@ -213,6 +214,7 @@ def synchronized_method(method):
 
 
 class FriarTuckLive:
+    config = None
     context = None
     active_algo = None
     _active_datetime = None
@@ -228,7 +230,9 @@ class FriarTuckLive:
     _security_last_known_price = {}
     _order_status_map = {"confirmed": 0, "partially_filled": 0, "filled": 1, "cancelled": 2, "rejected": 3, "queued": 4, "unconfirmed": 4, "failed": 5}
 
-    def __init__(self, user_name, password, data_frequency="1h"):
+    # def __init__(self, user_name, password, data_frequency="1h"):
+    def __init__(self, config, data_frequency="1h"):
+        self.config = config
         if not self._initialized:
             self.run_thread = None
             self.engine_running = False
@@ -237,10 +241,10 @@ class FriarTuckLive:
             self._active_datetime = datetime.now()
             # self._active_datetime = temp_datetime.replace(second=0, microsecond=0)
             # self.long_only=False
-            self.quote_source = GoogleQuoteSource()
+            self.quote_source = FriarTuckQuoteSource(config)
             self.context = FriarContext()
             self.rh_session = Robinhood()
-            self.rh_session.login(username=user_name, password=password)
+            self.rh_session.login(username=config.get('LOGIN', 'username'), password=config.get('LOGIN', 'password'))
             self.friar_data = FriarData(self)
 
     def set_active_algo(self, active_algo):
@@ -281,9 +285,9 @@ class FriarTuckLive:
         self.engine_running = False
         log.info("**** exiting - %s" % name)
 
-    def history(self, security, bar_count=1, frequency="1d", field=None):
+    def history(self, security, bar_count=1, frequency="1d", field=None, since_last_quote_time=None):
         symbol_map = security_to_symbol_map(security)
-        quotes = self.quote_source.fetch_quotes(symbol=symbol_map.keys(), bar_count=bar_count, frequency=frequency, field=field)
+        quotes = self.quote_source.fetch_quotes(symbol=symbol_map.keys(), bar_count=bar_count, frequency=frequency, field=field, market_open=self.is_market_open, since_last_quote_time=since_last_quote_time)
 
         if not isinstance(security, Iterable):
             return quotes[security.symbol]
@@ -298,7 +302,7 @@ class FriarTuckLive:
         return security.is_tradeable
 
     @synchronized_method
-    def current(self, security, field):
+    def current(self, security, field, since_last_quote_time=None):
         now_secs = datetime.now().second
         if now_secs < 10:
             # we need to wait 10 seconds after the minute to load current data... this is so the source can be ready.
@@ -306,7 +310,8 @@ class FriarTuckLive:
 
         if not isinstance(security, Iterable):
             if security not in self._current_security_bars:
-                security_bars = self.history(security, bar_count=1, frequency=self._data_frequency, field=None)
+                security_bars = self.history(security, bar_count=1, frequency=self._data_frequency, field=None, since_last_quote_time=since_last_quote_time)
+                # log.info(security_bars)
                 self._current_security_bars[security] = security_bars
 
             if self._current_security_bars[security] is None or self._current_security_bars[security].empty:
@@ -348,7 +353,7 @@ class FriarTuckLive:
             for sec in security:
                 symbol_list_map[sec.symbol] = sec
                 if sec not in self._current_security_bars:
-                    security_bars = self.history(sec, bar_count=1, frequency=self._data_frequency, field=None)
+                    security_bars = self.history(sec, bar_count=1, frequency=self._data_frequency, field=None, since_last_quote_time=since_last_quote_time)
 
                     if not security_bars or sec not in security_bars:
                         quote_date = datetime.now()
@@ -798,14 +803,16 @@ class FriarTuckLive:
                 amount = int(float(result["quantity"]))
                 if amount == 0:
                     continue
-
+                log.info("pos_infos:%s" % result)
                 instrument = self.rh_session.get_url_content_json(result["instrument"])
                 symbol = instrument["symbol"]
                 security = self.fetch_and_build_security(symbol, sec_detail=instrument)
-                last_price = self.current(security, field="price")
-                if not last_price:
-                    # Lets try again
-                    last_price = self.current(security, field="price")
+                # last_price = self.current(security, field="price")
+                last_price = float(self.rh_session.last_trade_price(symbol)[0][0])
+                log.debug(last_price)
+                # if not last_price:
+                # Lets try again
+                #    last_price = self.current(security, field="price")
 
                 if not last_price and security in self._security_last_known_price:
                     last_price = self._security_last_known_price[security]
@@ -813,8 +820,9 @@ class FriarTuckLive:
                 self._security_last_known_price[security] = last_price
 
                 created = utc_to_local(datetime.strptime(result["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
+                updated = utc_to_local(datetime.strptime(result["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ"))
                 cost_basis = float(result["average_buy_price"])
-                position = Position(amount, cost_basis, last_price, created)
+                position = Position(amount, cost_basis, last_price, created, updated)
                 if "intraday_quantity" in result:
                     position.day_amount = int(float(result["intraday_quantity"]))
 
