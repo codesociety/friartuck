@@ -134,7 +134,7 @@ def start_engine(input_args):
 
     """Start Shell Setup"""
     global friar_tuck
-    friar_tuck = FriarTuckLive(user_name=config.get('LOGIN', 'username'), password=config.get('LOGIN', 'password'),
+    friar_tuck = FriarTuckLive(config=config,
                                data_frequency=data_frequency)
     trading_algo.friar_tuck = friar_tuck
 
