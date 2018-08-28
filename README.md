@@ -49,7 +49,7 @@ Drive for this project: Build an algorithm on Quantopian, was satisfied with the
         
         # IEXTRADING for historical data
         iextrading.com
-        # ALPHA VANTAGE for intra-day realtime data
+        # ALPHA VANTAGE for intra-day realtime data (5 requests per minute for free, get your free apikey... more request are offered for premium service)
         www.alphavantage.co
       
  
