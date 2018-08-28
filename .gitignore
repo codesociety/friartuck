@@ -2,3 +2,4 @@ my_rh_config.cfg
 my_run.bat
 log.txt
 .idea/
+*.pyc

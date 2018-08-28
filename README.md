@@ -31,6 +31,10 @@ Config file (**rh_config.cfg**) ...
 [LOGIN]
     username = <robinhood username>
     password = <robinhood password>
+    
+[ALPHA_VANTAGE]
+    apikey = <get_your_fee_apikey from www.alphavantage.co>
+    wait_for_connection = yes
 ```
 Run FriarTuck - **Live**
 ```
@@ -43,10 +47,10 @@ Drive for this project: Build an algorithm on Quantopian, was satisfied with the
         # As a broker to Robinhood
         https://github.com/Jamonek/Robinhood
         
-        # Google's Undocumented Finance API For quotes(ohlcv) (frequencies 1m, 1h, 1d)
-        finance.google.com/finance/
-        # Google informatin on delays for quotes(most are realtime)
-        https://www.google.com/intl/en/googlefinance/disclaimer/
+        # IEXTRADING for historical data
+        iextrading.com
+        # ALPHA VANTAGE for intra-day realtime data
+        www.alphavantage.co
       
  
 ## GETTING STARTED
@@ -267,6 +271,8 @@ You can follow me on [twitter](https://twitter.com/ClivensLaguerre).
 I want to praise the efforts of the people/projects that have inspired me while <br>
 I've been working on this project by briefly mention below their names and projects: <br>
 
+- IEX TRADING [here](https://iextrading.com/developer/docs/#getting-started)
+- ALPHA VANTAGE [here](https://www.alphavantage.co)
 - @Quantopian [here](https://www.quantopian.com)
 - @Jamonek / Robinhood [github](https://github.com/Jamonek/Robinhood).
 - Github guides for their precious [documenting your project](https://guides.github.com/features/wikis/#creating-a-readme) article concerning readme creation
