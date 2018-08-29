@@ -112,8 +112,10 @@ class AlphaVantage(object):
             for date_str in quotes:
                 quote_data = quotes[date_str]
                 minute_adjust = 0
+                """
                 if interval != "1min":
                     minute_adjust = int(interval.replace("min", ""))
+                """
 
                 quote_date = datetime.strptime(date_str, "%Y-%m-%d %H:%M:00") - timedelta(hours=1, minutes=minute_adjust)
 
