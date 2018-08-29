@@ -57,7 +57,8 @@ def initialize(context, data):
     for sec in context.portfolio.positions:
         log.info("symbol(%s) pos(%s) " % (sec.symbol, context.portfolio.positions[sec]))
 
-    hist_quotes = data.history([context.aapl, context.wtw], frequency='15m', bar_count=1400, field=['open', 'close'])
+    # hist_quotes = data.history([context.aapl, context.wtw], frequency='15m', bar_count=1400, field=['open', 'close'])
+    hist_quotes = data.current([context.aapl, context.wtw], field=['open', 'close'])
     log.debug(hist_quotes)
 
     # fifteenMinInSecs = (15*60)

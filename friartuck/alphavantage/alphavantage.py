@@ -1,9 +1,7 @@
 import json
 from datetime import timedelta, datetime
-import calendar
 import pandas as pd
 import urllib.request
-from tinydb import TinyDB, Query
 
 
 class AlphaVantage(object):

@@ -355,10 +355,10 @@ class FriarTuckLive:
                 if sec not in self._current_security_bars:
                     security_bars = self.history(sec, bar_count=1, frequency=self._data_frequency, field=None, since_last_quote_time=since_last_quote_time)
 
-                    if not security_bars or sec not in security_bars:
+                    if security_bars is None:
                         quote_date = datetime.now()
                         quote_date = quote_date.replace(second=0, microsecond=0)
-                        security_bars[sec] = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
+                        security_bars = pd.DataFrame(index=pd.DatetimeIndex([quote_date]),
                                                           data={'price': float("nan"),
                                                                 'open': float("nan"),
                                                                 'high': float("nan"),
@@ -366,7 +366,7 @@ class FriarTuckLive:
                                                                 'close': float("nan"),
                                                                 'volume': int(0)})
 
-                    self._current_security_bars[sec] = security_bars[sec]
+                    self._current_security_bars[sec] = security_bars
 
                 if self._current_security_bars[sec] is not None:  # and (not self._current_security_bars[sec].empty or self._current_security_bars[sec].iloc[-1]["price"] == float["nan"]):
                     last_price_list = self.rh_session.get_quote_list(sec.symbol, 'symbol,last_trade_price,bid_price,bid_size,ask_price,ask_size')
