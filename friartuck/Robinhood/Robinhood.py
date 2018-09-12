@@ -123,6 +123,55 @@ class Robinhood:
         ):
         """save and test login info for Robinhood accounts
 
+            Args:
+        username (str): username
+        password (str): password
+
+        Returns:
+            (bool): received valid auth token
+
+        """
+
+        self.username = username
+        self.password = password
+        payload = {
+            'client_id': 'c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS',
+            'expires_in': 86400,
+            'grant_type': 'password',
+            'password': self.password,
+            'scope': 'internal',
+            'username': self.username
+        }
+
+        if mfa_code:
+            payload['mfa_code'] = mfa_code
+
+        try:
+            res = self.session.post('https://api.robinhood.com/oauth2/token/', data=payload, timeout=15)
+            res.raise_for_status()
+            data = res.json()
+            print(data)
+        except requests.exceptions.HTTPError:
+            raise RH_exception.LoginFailed()
+
+        if 'mfa_required' in data.keys():           # pragma: no cover
+            raise RH_exception.TwoFactorRequired()  # requires a second call to enable 2FA
+
+        if 'access_token' in data.keys():
+            self.oauth_token = data['access_token']
+            self.headers['Authorization'] = 'Bearer ' + self.oauth_token
+            return True
+
+        return False
+    
+    def loginOld(
+            self,
+            username,
+            password,
+            mfa_code=None
+        ):
+        """save and test login info for Robinhood accounts
+
         Args:
             username (str): username
             password (str): password
@@ -148,7 +197,9 @@ class Robinhood:
             )
             res.raise_for_status()
             data = res.json()
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as err_msg:
+            print(err_msg)
+            warnings.warn('Failed to log out ' + repr(err_msg))
             raise RH_exception.LoginFailed()
 
         if 'mfa_required' in data.keys():           #pragma: no cover
@@ -209,9 +260,11 @@ class Robinhood:
         placing orders, and generating and using the instrument object are handled
         for you, so you can ignore this method'''
         res = self.session.get(self.endpoints['instruments'], params={'query':symbol.upper()})
+        print(self.endpoints['instruments'])
         if res.status_code == 200:
             return res.json()['results']
         else:
+            print(res.content)
             raise Exception("Could not generate instrument object: %s " % res.headers)
 
     def market_info(self):
