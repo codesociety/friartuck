@@ -304,9 +304,9 @@ class Robinhood:
             url = str(self.endpoints['quotes']) + "?symbols=" + str(stock)
         #Check for validity of symbol
         try:
-            req = requests.get(url)
-            req.raise_for_status()
-            data = req.json()
+            res = self.session.get(url)
+            res.raise_for_status()  # auth required
+            data = res.json()
         except requests.exceptions.HTTPError:
             raise NameError('Invalid Symbol: ' + stock) #TODO: custom exception
 
