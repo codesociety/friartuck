@@ -315,6 +315,8 @@ def summarize_quote(quotes, minute_series):
                     bars = bar
                 else:
                     bars = bars.append(bar)
+            else:
+                print("not: %s" % active_quote)
 
             # print(quote_data)
             # active_quote = None
@@ -334,18 +336,32 @@ def summarize_quote(quotes, minute_series):
                             'volume': is_valid_value(int(get_field_value('marketVolume', quote_data, -1)), int(quote_data['volume'])),
                             'date': quote_date}
 
+            # print("1: %s" % active_quote)
+            # print("2: %s" % quote_data)
         else:
             if "marketClose" in quote_data:
                 if active_quote['open'] == -1:
                     active_quote['open'] = is_valid_value(float(get_field_value('marketOpen', quote_data, -1)), float(get_field_value('open', quote_data, -1)))
 
-                active_quote['price'] = is_valid_value(float(get_field_value('marketClose', quote_data, -1)), float(get_field_value('close', quote_data, -1)))
-                active_quote['close'] = is_valid_value(float(get_field_value('marketClose', quote_data, -1)), float(get_field_value('close', quote_data, -1)))
-                active_quote['volume'] = active_quote['volume']+is_valid_value(int(quote_data['marketVolume']), int(quote_data['volume']))
-                if active_quote['high'] == -1 or active_quote['high'] < is_valid_value(float(get_field_value('marketHigh', quote_data, -1)), float(quote_data['high'])):
-                    active_quote['high'] = is_valid_value(float(get_field_value('marketHigh', quote_data, -1)), float(quote_data['high']))
-                if active_quote['low'] == -1 or active_quote['low'] > is_valid_value(float(get_field_value('marketLow', quote_data, -1)), float(quote_data['low'])):
-                    active_quote['low'] = is_valid_value(float(get_field_value('marketLow', quote_data, -1)), float(quote_data['low']))
+                new_close = is_valid_value(float(get_field_value('marketClose', quote_data, -1)), float(get_field_value('close', quote_data, -1)))
+                if new_close != -1:
+                    active_quote['price'] = new_close
+                    active_quote['close'] = new_close
+
+                new_volume = is_valid_value(int(quote_data['marketVolume']), int(quote_data['volume']))
+                if new_volume != -1:
+                    active_quote['volume'] = active_quote['volume']+new_volume
+
+                new_high = is_valid_value(float(get_field_value('marketHigh', quote_data, -1)), float(quote_data['high']))
+                new_low = is_valid_value(float(get_field_value('marketLow', quote_data, -1)), float(quote_data['low']))
+
+                if new_high != -1 and (active_quote['high'] == -1 or new_high > active_quote['high']):
+                    active_quote['high'] = new_high
+                if new_low != -1 and (active_quote['low'] == -1 or new_low < active_quote['low']):
+                    active_quote['low'] = new_low
+
+                # print("1x: %s" % active_quote)
+                # print("2x: %s" % quote_data)
 
     if active_quote and active_quote['close'] != -1:
         bar = pd.DataFrame(index=pd.DatetimeIndex([active_quote['date']]),
