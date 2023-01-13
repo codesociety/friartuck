@@ -637,20 +637,13 @@ class Robinhood:
             (:obj:`dict`): contents of `fundamentals` endpoint
 
         """
-        #Prompt for stock if not entered
-        if not stock:   #pragma: no cover
-            stock = input("Symbol: ")
-
-        url = str(self.endpoints['fundamentals']) + str(stock.upper()) + "/"
-        #Check for validity of symbol
         try:
-            req = requests.get(url)
-            req.raise_for_status()
-            data = req.json()
-        except requests.exceptions.HTTPError:
-            raise NameError('Invalid Symbol: ' + stock) #TODO wrap custom exception
-
-        return data
+            return self.session.get(self.endpoints['fundamentals']+stock.upper()+"/").json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                raise RobinhoodException("Invalid stock ticker")
+            else:
+                raise e
 
 
     def fundamentals(self, stock=''):
